@@ -143,13 +143,39 @@ def test_reports():
     print("  → Listing all reports...")
     r = client.get(f"{BASE_URL}/reports/weekly/list", headers=HEADERS)
     r.raise_for_status()
-    reports = r.json()
+    reports_response = r.json()
+    reports = reports_response.get('reports', [])
     print(f"    Found {len(reports)} report(s)")
     
-    # Optional: Test with limit parameter
+    # Test with limit parameter
     print("  → Testing list with limit...")
     r = client.get(f"{BASE_URL}/reports/weekly/list?limit=5", headers=HEADERS)
     r.raise_for_status()
+    
+    # Test force regenerate
+    print("  → Testing force regenerate...")
+    r = client.get(f"{BASE_URL}/reports/weekly?force_regenerate=true", headers=HEADERS)
+    r.raise_for_status()
+    print(f"    Regenerated report successfully")
+    
+    # Test delete endpoint (only if we have reports)
+    if reports:
+        report_id = reports[0]['report_id']
+        print(f"  → Testing delete report {report_id[:8]}...")
+        r = client.delete(f"{BASE_URL}/reports/weekly/{report_id}", headers=HEADERS)
+        r.raise_for_status()
+        delete_response = r.json()
+        print(f"    {delete_response.get('message', 'Deleted successfully')}")
+        
+        # Verify deletion
+        print("  → Verifying deletion...")
+        r = client.get(f"{BASE_URL}/reports/weekly/list", headers=HEADERS)
+        r.raise_for_status()
+        new_reports = r.json().get('reports', [])
+        assert len(new_reports) == len(reports) - 1, "Report count should decrease by 1"
+        print(f"    Confirmed: report count decreased from {len(reports)} to {len(new_reports)}")
+    else:
+        print("  [yellow]⚠ Skipping delete test: no reports available[/yellow]")
 
 # ============================================================================
 # ENGAGEMENT

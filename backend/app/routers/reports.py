@@ -1,5 +1,4 @@
-# reports.py
-# FIXED VERSION - Improved DB queries and error handling
+# reports.py - FIXED to handle weeks with no data gracefully
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import HTMLResponse
@@ -55,7 +54,6 @@ async def get_current_user(
 def normalize_metrics(raw_metrics: dict, *, days_tracked: int, consistent_tracking: bool) -> dict:
     """Normalize metrics to ensure consistent schema."""
     
-    # Handle case where raw_metrics might be a string or None
     if not isinstance(raw_metrics, dict):
         raw_metrics = {}
     
@@ -75,6 +73,122 @@ def normalize_metrics(raw_metrics: dict, *, days_tracked: int, consistent_tracki
     }
 
     return WeeklyMetrics(**normalized).model_dump()
+
+
+# ============================================================================
+# HELPER: Generate Empty Week Report
+# ============================================================================
+
+def generate_empty_week_report(week_start: date, week_end: date) -> dict:
+    """Generate a report for a week with no data."""
+    empty_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                max-width: 800px;
+                margin: 40px auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #FFF5F5 0%, #FFE5E5 100%);
+            }}
+            .container {{
+                background: white;
+                border-radius: 20px;
+                padding: 40px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }}
+            h1 {{
+                color: #FF6B9D;
+                margin-bottom: 10px;
+            }}
+            .date-range {{
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 30px;
+            }}
+            .empty-state {{
+                text-align: center;
+                padding: 60px 20px;
+            }}
+            .empty-icon {{
+                font-size: 64px;
+                margin-bottom: 20px;
+            }}
+            .empty-message {{
+                font-size: 18px;
+                color: #333;
+                margin-bottom: 10px;
+            }}
+            .empty-subtitle {{
+                color: #666;
+                font-size: 14px;
+            }}
+            .cta {{
+                margin-top: 30px;
+                padding: 15px 30px;
+                background: linear-gradient(135deg, #FF6B9D, #C44569);
+                color: white;
+                border-radius: 10px;
+                text-decoration: none;
+                display: inline-block;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Weekly Report</h1>
+            <div class="date-range">{week_start.strftime('%B %d')} - {week_end.strftime('%B %d, %Y')}</div>
+            
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <div class="empty-message">No Data This Week</div>
+                <div class="empty-subtitle">Start tracking your skin and mood to generate insights!</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return {
+        "condition_summary": "No data was logged during this week. Start tracking your skin condition and mood to generate personalized insights and recommendations.",
+        "skin_trend": "insufficient_data",
+        "report_text": f"Weekly Report ({week_start} to {week_end}): No data available for this period.",
+        "metrics": {
+            "average_severity": None,
+            "average_confidence": 0.0,
+            "improvement_vs_last_week": None,
+            "total_images_uploaded": 0,
+            "consistent_tracking": False,
+            "days_tracked": 0,
+        },
+        "key_insights": [
+            {
+                "title": "Start Your Journey",
+                "description": "Upload your first skin image to begin tracking your progress.",
+                "category": "action",
+                "severity": "info",
+                "icon": "🚀"
+            }
+        ],
+        "recommendations": [
+            {
+                "action": "Upload a skin photo to establish your baseline",
+                "priority": "high",
+                "category": "tracking",
+                "reasoning": "Establishing a baseline will help track your progress over time."
+            },
+            {
+                "action": "Log your mood daily to track patterns",
+                "priority": "high", 
+                "category": "tracking",
+                "reasoning": "Daily mood tracking helps identify patterns between your mental state and skin condition."
+            }
+        ],
+        "report_html": empty_html
+    }
 
 
 # ============================================================================
@@ -104,7 +218,6 @@ async def _get_or_generate_report(
             existing = result.scalar_one_or_none()
 
             if existing and existing.report_html:
-                # Auto-migrate metrics if needed
                 raw_metrics = existing.metrics or {}
                 
                 existing.metrics = normalize_metrics(
@@ -118,7 +231,6 @@ async def _get_or_generate_report(
                 return existing, False
                 
         except Exception as e:
-            # Log error but continue to generation
             print(f"Error fetching cached report: {e}")
 
     # Generate new report
@@ -132,14 +244,69 @@ async def _get_or_generate_report(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error gathering context: {str(e)}")
 
-    if not context:
-        raise HTTPException(status_code=404, detail="No data found for this week")
+    # FIXED: Handle empty weeks gracefully instead of raising 404
+    if not context or not context.get("diagnoses"):
+        print(f"ℹ️ No data for week {week_start} - {week_end}, generating empty report")
+        empty_report_data = generate_empty_week_report(week_start, week_end)
+        
+        # Check if report already exists (in case force_regenerate was called twice)
+        try:
+            result = await db.execute(
+                select(WeeklyReport).where(
+                    and_(
+                        WeeklyReport.user_id == user.id,
+                        WeeklyReport.week_start == week_start
+                    )
+                )
+            )
+            existing_report = result.scalar_one_or_none()
+            
+            if existing_report:
+                # Update existing report
+                print(f"♻️ Updating existing empty report for week {week_start}")
+                existing_report.week_end = week_end
+                existing_report.condition_summary = empty_report_data["condition_summary"]
+                existing_report.skin_trend = empty_report_data["skin_trend"]
+                existing_report.report_text = empty_report_data["report_text"]
+                existing_report.metrics = empty_report_data["metrics"]
+                existing_report.key_insights = empty_report_data["key_insights"]
+                existing_report.recommendations = empty_report_data["recommendations"]
+                existing_report.report_html = empty_report_data["report_html"]
+                
+                await db.commit()
+                await db.refresh(existing_report)
+                return existing_report, True
+        except Exception as e:
+            print(f"⚠️ Error checking for existing report: {e}")
+        
+        # Create new empty week report
+        weekly_report = WeeklyReport(
+            user_id=user.id,
+            week_start=week_start,
+            week_end=week_end,
+            condition_summary=empty_report_data["condition_summary"],
+            skin_trend=empty_report_data["skin_trend"],
+            report_text=empty_report_data["report_text"],
+            metrics=empty_report_data["metrics"],
+            key_insights=empty_report_data["key_insights"],
+            recommendations=empty_report_data["recommendations"],
+            report_html=empty_report_data["report_html"],
+        )
+        
+        try:
+            db.add(weekly_report)
+            await db.commit()
+            await db.refresh(weekly_report)
+            return weekly_report, True
+        except Exception as e:
+            print(f"❌ Error saving empty report: {e}")
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error saving report: {str(e)}")
 
-    # Calculate tracking metrics
+    # Calculate tracking metrics for weeks with data
     unique_dates = set()
     for diag in context.get("diagnoses", []):
         try:
-            # Handle both string and datetime objects
             if isinstance(diag["date"], str):
                 diag_date = datetime.fromisoformat(diag["date"]).date()
             elif isinstance(diag["date"], datetime):
@@ -159,26 +326,17 @@ async def _get_or_generate_report(
     try:
         report_data = await report_generator.generate_report_with_llm(context, user.id)
         
-        # Validate required fields exist
         if not isinstance(report_data, dict):
             raise ValueError("LLM returned invalid report format")
-        
-        # Debug: Log what keys we got from LLM
-        print(f"📊 LLM returned keys: {list(report_data.keys())}")
-        print(f"📊 Report data sample: {str(report_data)[:200]}...")
             
     except Exception as e:
         print(f"Error generating report with LLM: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
 
-    # Normalize metrics with better fallbacks
+    # Normalize metrics
     raw_metrics_data = report_data.get("metrics", report_data.get("metrics_interpretation", {}))
     
-    # If metrics_interpretation is a string or missing, create default metrics from context
     if isinstance(raw_metrics_data, str) or not raw_metrics_data:
-        print(f"⚠️ No valid metrics found, generating defaults from context")
-        
-        # Calculate basic metrics from context
         diagnoses = context.get("diagnoses", [])
         if diagnoses:
             avg_severity = sum(d.get("severity", 0) for d in diagnoses) / len(diagnoses) if diagnoses else None
@@ -205,11 +363,9 @@ async def _get_or_generate_report(
         report_html = report_generator.generate_html_report(report_data, context)
     except Exception as e:
         print(f"❌ Error generating HTML: {e}")
-        import traceback
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating HTML: {str(e)}")
 
-    # Extract skin trend from various possible keys
+    # Extract skin trend
     skin_trend = (
         report_data.get("skin_trend") or 
         report_data.get("trend") or 
@@ -217,14 +373,13 @@ async def _get_or_generate_report(
         "stable"
     )
     
-    # Create plain text version of report
+    # Create report text
     report_text_parts = [
         f"Weekly Report: {week_start} to {week_end}",
         f"\nCondition Summary:\n{report_data.get('condition_summary', 'No summary available')}",
         f"\nSkin Trend: {skin_trend}",
     ]
     
-    # Add key insights
     insights = report_data.get("key_insights", [])
     if insights:
         report_text_parts.append("\nKey Insights:")
@@ -232,7 +387,6 @@ async def _get_or_generate_report(
             title = insight.get("title", "") if isinstance(insight, dict) else str(insight)
             report_text_parts.append(f"{i}. {title}")
     
-    # Add recommendations
     recommendations = report_data.get("recommendations", report_data.get("next_steps", []))
     if recommendations:
         report_text_parts.append("\nRecommendations:")
@@ -242,8 +396,36 @@ async def _get_or_generate_report(
     
     report_text = "\n".join(report_text_parts)
 
-    # Save to database with safe defaults
+    # Save to database
     try:
+        # Check if report already exists for this week
+        result = await db.execute(
+            select(WeeklyReport).where(
+                and_(
+                    WeeklyReport.user_id == user.id,
+                    WeeklyReport.week_start == week_start
+                )
+            )
+        )
+        existing_report = result.scalar_one_or_none()
+        
+        if existing_report:
+            # Update existing report
+            print(f"♻️ Updating existing report for week {week_start}")
+            existing_report.week_end = week_end
+            existing_report.condition_summary = report_data.get("condition_summary", "No summary available")
+            existing_report.skin_trend = skin_trend
+            existing_report.report_text = report_text
+            existing_report.metrics = metrics
+            existing_report.key_insights = report_data.get("key_insights", [])
+            existing_report.recommendations = recommendations
+            existing_report.report_html = report_html
+            
+            await db.commit()
+            await db.refresh(existing_report)
+            return existing_report, True
+        
+        # Create new report
         weekly_report = WeeklyReport(
             user_id=user.id,
             week_start=week_start,
@@ -257,28 +439,12 @@ async def _get_or_generate_report(
             report_html=report_html,
         )
         
-        print(f"✅ Created WeeklyReport object successfully")
-        print(f"   - condition_summary: {len(weekly_report.condition_summary)} chars")
-        print(f"   - skin_trend: {weekly_report.skin_trend}")
-        print(f"   - metrics keys: {list(metrics.keys())}")
-        
-    except Exception as e:
-        print(f"❌ Error creating WeeklyReport object: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error creating report object: {str(e)}")
-
-    try:
-        print(f"💾 Attempting to save to database...")
         db.add(weekly_report)
         await db.commit()
-        print(f"✅ Database commit successful")
         await db.refresh(weekly_report)
-        print(f"✅ Database refresh successful")
+        
     except Exception as e:
         print(f"❌ Database error: {e}")
-        import traceback
-        traceback.print_exc()
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error saving report: {str(e)}")
 
@@ -383,3 +549,51 @@ async def list_weekly_reports(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing reports: {str(e)}")
+
+
+# ============================================================================
+# ENDPOINT 4: DELETE REPORT
+# ============================================================================
+
+@router.delete("/weekly/{report_id}")
+async def delete_report(
+    report_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Delete a specific weekly report."""
+    try:
+        report_uuid = UUID(report_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid report UUID format")
+    
+    try:
+        # Find the report
+        result = await db.execute(
+            select(WeeklyReport).where(
+                and_(
+                    WeeklyReport.id == report_uuid,
+                    WeeklyReport.user_id == user.id
+                )
+            )
+        )
+        report = result.scalar_one_or_none()
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Report not found or you don't have permission to delete it")
+        
+        # Delete the report
+        await db.delete(report)
+        await db.commit()
+        
+        return {
+            "success": True,
+            "message": "Report deleted successfully",
+            "report_id": report_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting report: {str(e)}")
