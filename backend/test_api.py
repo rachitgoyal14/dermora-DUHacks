@@ -8,7 +8,7 @@ import traceback
 # CONFIG
 # ============================================================================
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "https://prices-sisters-assume-pound.trycloudflare.com"
 USER_ID = "00000000-0000-0000-0000-000000000000"
 
 HEADERS = {"X-User-Id": USER_ID}
