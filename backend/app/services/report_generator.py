@@ -260,186 +260,443 @@ Be encouraging but honest. Use medical terminology accurately but explain it cle
             print(f"LLM generation error: {e}")
             raise
     
+    
     def generate_html_report(
         self,
         report_data: Dict,
         context: Dict
     ) -> str:
-        """Generate rich HTML for in-app display"""
+        """Generate professional HTML report for display"""
         
         week_start = context["week_period"]["start"]
         week_end = context["week_period"]["end"]
         current_week = context.get("current_week", {})
         
+        # Map severity to professional indicators
+        severity_indicators = {
+            'positive': {'color': '#10b981', 'bg': '#ecfdf5', 'label': 'Positive'},
+            'negative': {'color': '#ef4444', 'bg': '#fef2f2', 'label': 'Attention Required'},
+            'neutral': {'color': '#3b82f6', 'bg': '#eff6ff', 'label': 'Stable'}
+        }
+        
         html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }}
-        .report-header {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }}
-        .report-title {{
-            font-size: 28px;
-            font-weight: bold;
-            margin: 0 0 10px 0;
-        }}
-        .week-period {{
-            font-size: 14px;
-            opacity: 0.9;
-        }}
-        .section {{
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .section-title {{
-            font-size: 20px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 15px;
-        }}
-        .insight {{
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border-left: 4px solid;
-        }}
-        .insight.positive {{ 
-            background: #f0fdf4; 
-            border-color: #10b981;
-        }}
-        .insight.negative {{ 
-            background: #fef2f2; 
-            border-color: #ef4444;
-        }}
-        .insight.neutral {{ 
-            background: #f0f9ff; 
-            border-color: #3b82f6;
-        }}
-        .insight-title {{
-            font-weight: 600;
-            margin-bottom: 5px;
-        }}
-        .recommendation {{
-            padding: 15px;
-            margin-bottom: 10px;
-            background: #fafafa;
-            border-radius: 8px;
-            border-left: 3px solid #667eea;
-        }}
-        .priority-badge {{
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 10px;
-        }}
-        .priority-high {{ background: #fecaca; color: #991b1b; }}
-        .priority-medium {{ background: #fed7aa; color: #9a3412; }}
-        .priority-low {{ background: #bfdbfe; color: #1e3a8a; }}
-        .metrics-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }}
-        .metric-card {{
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }}
-        .metric-value {{
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }}
-        .metric-label {{
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 5px;
-        }}
-    </style>
-</head>
-<body>
-    <div class="report-header">
-        <div class="report-title">{report_data.get('report_title', 'Weekly Health Report')}</div>
-        <div class="week-period">{week_start} to {week_end}</div>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">📋 Summary</div>
-        <p>{report_data.get('condition_summary', 'Report generated successfully.')}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">💡 Key Insights</div>
-        {''.join([f'''
-        <div class="insight {insight.get('severity', 'neutral')}">
-            <div class="insight-title">{insight.get('icon', '📊')} {insight.get('title', 'Insight')}</div>
-            <div>{insight.get('description', '')}</div>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Weekly Skin Health Report</title>
+        <style>
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+            
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+                line-height: 1.6;
+                color: #1f2937;
+                background: #f9fafb;
+                padding: 0;
+            }}
+            
+            .report-container {{
+                max-width: 900px;
+                margin: 0 auto;
+                background: white;
+            }}
+            
+            .report-header {{
+                background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                color: white;
+                padding: 48px 40px;
+            }}
+            
+            .report-title {{
+                font-size: 32px;
+                font-weight: 700;
+                margin-bottom: 12px;
+                letter-spacing: -0.5px;
+            }}
+            
+            .report-subtitle {{
+                font-size: 16px;
+                opacity: 0.95;
+                font-weight: 400;
+            }}
+            
+            .report-meta {{
+                display: flex;
+                gap: 24px;
+                margin-top: 24px;
+                padding-top: 24px;
+                border-top: 1px solid rgba(255,255,255,0.2);
+            }}
+            
+            .meta-item {{
+                display: flex;
+                flex-direction: column;
+            }}
+            
+            .meta-label {{
+                font-size: 13px;
+                opacity: 0.8;
+                margin-bottom: 4px;
+            }}
+            
+            .meta-value {{
+                font-size: 18px;
+                font-weight: 600;
+            }}
+            
+            .report-content {{
+                padding: 40px;
+            }}
+            
+            .section {{
+                margin-bottom: 40px;
+            }}
+            
+            .section-header {{
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 2px solid #e5e7eb;
+            }}
+            
+            .section-title {{
+                font-size: 20px;
+                font-weight: 700;
+                color: #111827;
+            }}
+            
+            .summary-text {{
+                font-size: 16px;
+                line-height: 1.8;
+                color: #374151;
+            }}
+            
+            .insights-grid {{
+                display: grid;
+                gap: 16px;
+            }}
+            
+            .insight-card {{
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid;
+                transition: transform 0.2s;
+            }}
+            
+            .insight-card:hover {{
+                transform: translateX(4px);
+            }}
+            
+            .insight-header {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 12px;
+            }}
+            
+            .insight-title {{
+                font-size: 16px;
+                font-weight: 600;
+                color: #111827;
+            }}
+            
+            .insight-badge {{
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }}
+            
+            .insight-description {{
+                font-size: 14px;
+                line-height: 1.6;
+                color: #4b5563;
+            }}
+            
+            .recommendations-list {{
+                display: grid;
+                gap: 16px;
+            }}
+            
+            .recommendation-card {{
+                padding: 20px;
+                background: #f9fafb;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+            }}
+            
+            .recommendation-header {{
+                display: flex;
+                align-items: start;
+                justify-content: space-between;
+                margin-bottom: 12px;
+            }}
+            
+            .recommendation-action {{
+                font-size: 16px;
+                font-weight: 600;
+                color: #111827;
+                flex: 1;
+            }}
+            
+            .priority-badge {{
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                white-space: nowrap;
+            }}
+            
+            .priority-high {{
+                background: #fef2f2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+            }}
+            
+            .priority-medium {{
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #fde68a;
+            }}
+            
+            .priority-low {{
+                background: #eff6ff;
+                color: #1e3a8a;
+                border: 1px solid #bfdbfe;
+            }}
+            
+            .recommendation-reasoning {{
+                font-size: 14px;
+                line-height: 1.6;
+                color: #6b7280;
+            }}
+            
+            .recommendation-category {{
+                display: inline-block;
+                font-size: 12px;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+            }}
+            
+            .metrics-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }}
+            
+            .metric-card {{
+                background: #f9fafb;
+                padding: 24px;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+                text-align: center;
+            }}
+            
+            .metric-value {{
+                font-size: 36px;
+                font-weight: 700;
+                color: #4f46e5;
+                margin-bottom: 8px;
+            }}
+            
+            .metric-label {{
+                font-size: 13px;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 600;
+            }}
+            
+            .next-steps-box {{
+                background: #eff6ff;
+                padding: 24px;
+                border-radius: 8px;
+                border-left: 4px solid #3b82f6;
+            }}
+            
+            .next-steps-text {{
+                font-size: 15px;
+                line-height: 1.8;
+                color: #1e3a8a;
+            }}
+            
+            .report-footer {{
+                background: #f9fafb;
+                padding: 32px 40px;
+                text-align: center;
+                border-top: 1px solid #e5e7eb;
+            }}
+            
+            .footer-text {{
+                font-size: 13px;
+                color: #6b7280;
+                line-height: 1.6;
+            }}
+            
+            @media print {{
+                body {{ background: white; }}
+                .report-container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="report-container">
+            <header class="report-header">
+                <h1 class="report-title">{report_data.get('report_title', 'Weekly Skin Health Report')}</h1>
+                <p class="report-subtitle">Comprehensive Analysis & Recommendations</p>
+                <div class="report-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Reporting Period</span>
+                        <span class="meta-value">{week_start} to {week_end}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Images Analyzed</span>
+                        <span class="meta-value">{context['total_images']}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Primary Condition</span>
+                        <span class="meta-value">{current_week.get('primary_condition', 'N/A').title()}</span>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="report-content">
+                <!-- Executive Summary -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Executive Summary</h2>
+                    </div>
+                    <p class="summary-text">{report_data.get('condition_summary', 'Report generated successfully.')}</p>
+                </section>
+                
+                <!-- Key Insights -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Clinical Insights</h2>
+                    </div>
+                    <div class="insights-grid">
+    """
+        
+        # Add insights
+        for insight in report_data.get('key_insights', []):
+            severity = insight.get('severity', 'neutral')
+            indicator = severity_indicators.get(severity, severity_indicators['neutral'])
+            
+            html += f"""
+                        <div class="insight-card" style="background: {indicator['bg']}; border-color: {indicator['color']};">
+                            <div class="insight-header">
+                                <h3 class="insight-title">{insight.get('title', 'Insight')}</h3>
+                                <span class="insight-badge" style="background: {indicator['color']}; color: white;">
+                                    {indicator['label']}
+                                </span>
+                            </div>
+                            <p class="insight-description">{insight.get('description', '')}</p>
+                        </div>
+    """
+        
+        html += """
+                    </div>
+                </section>
+                
+                <!-- Recommendations -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Recommended Actions</h2>
+                    </div>
+                    <div class="recommendations-list">
+    """
+        
+        # Add recommendations
+        for rec in report_data.get('recommendations', []):
+            priority = rec.get('priority', 'medium').lower()
+            category = rec.get('category', 'general').title()
+            
+            html += f"""
+                        <div class="recommendation-card">
+                            <div class="recommendation-category">{category}</div>
+                            <div class="recommendation-header">
+                                <div class="recommendation-action">{rec.get('action', '')}</div>
+                                <span class="priority-badge priority-{priority}">{priority}</span>
+                            </div>
+                            <p class="recommendation-reasoning">{rec.get('reasoning', '')}</p>
+                        </div>
+    """
+        
+        # Calculate metrics with safe defaults
+        avg_confidence = current_week.get('average_confidence', 0)
+        if isinstance(avg_confidence, (int, float)):
+            confidence_display = f"{avg_confidence:.0%}"
+        else:
+            confidence_display = "N/A"
+        
+        improvement = current_week.get('improvement_percentage')
+        if improvement is not None:
+            improvement_display = f"{improvement:+.1f}%"
+        else:
+            improvement_display = "N/A"
+        
+        html += f"""
+                    </div>
+                </section>
+                
+                <!-- Metrics -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Key Metrics</h2>
+                    </div>
+                    <p class="summary-text">{report_data.get('metrics_interpretation', 'Weekly metrics have been calculated and analyzed.')}</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">{context['total_images']}</div>
+                            <div class="metric-label">Images Analyzed</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">{confidence_display}</div>
+                            <div class="metric-label">Average Confidence</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">{improvement_display}</div>
+                            <div class="metric-label">Weekly Change</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Next Steps -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Next Steps</h2>
+                    </div>
+                    <div class="next-steps-box">
+                        <p class="next-steps-text">{report_data.get('next_steps', 'Continue monitoring your skin condition and follow the recommendations provided above.')}</p>
+                    </div>
+                </section>
+            </main>
+            
+            <footer class="report-footer">
+                <p class="footer-text">
+                    This report is generated by AI analysis and should not replace professional medical advice.<br>
+                    Always consult with a qualified dermatologist for diagnosis and treatment decisions.
+                </p>
+            </footer>
         </div>
-        ''' for insight in report_data.get('key_insights', [])])}
-    </div>
-    
-    <div class="section">
-        <div class="section-title">🎯 Recommendations</div>
-        {''.join([f'''
-        <div class="recommendation">
-            <div>
-                <strong>{rec.get('action', '')}</strong>
-                <span class="priority-badge priority-{rec.get('priority', 'medium')}">{rec.get('priority', 'MEDIUM').upper()}</span>
-            </div>
-            <div style="margin-top: 8px; color: #666; font-size: 14px;">
-                {rec.get('reasoning', '')}
-            </div>
-        </div>
-        ''' for rec in report_data.get('recommendations', [])])}
-    </div>
-    
-    <div class="section">
-        <div class="section-title">📊 This Week's Metrics</div>
-        <p>{report_data.get('metrics_interpretation', 'No metrics interpretation available.')}</p>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-value">{context['total_images']}</div>
-                <div class="metric-label">Images Uploaded</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value">{current_week.get('average_confidence', 0):.0%}</div>
-                <div class="metric-label">Avg Confidence</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value">{current_week.get('improvement_percentage') or 0:+.1f}%</div>
-                <div class="metric-label">Change vs Last Week</div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">🔮 Next Steps</div>
-        <p>{report_data.get('next_steps', 'Continue tracking your progress weekly.')}</p>
-    </div>
-</body>
-</html>
-"""
+    </body>
+    </html>
+    """
+        
         return html

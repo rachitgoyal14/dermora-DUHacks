@@ -35,13 +35,16 @@ def err(name, e):
     if isinstance(e, httpx.HTTPStatusError):
         resp = e.response
         print(f"[yellow]Status:[/yellow] {resp.status_code}")
+        print(f"[yellow]URL:[/yellow] {resp.url}")
         print("[yellow]Response body:[/yellow]")
         try:
             print(resp.json())
         except Exception:
-            print(resp.text)
+            print(resp.text[:500])  # Limit text output
     else:
-        print(str(e))
+        print(f"[yellow]Error type:[/yellow] {type(e).__name__}")
+        print(f"[yellow]Error:[/yellow] {str(e)}")
+        traceback.print_exc()
 
     FAILED.append((name, str(e)))
     print()
@@ -58,9 +61,11 @@ def run_test(name, fn):
 # ============================================================================
 
 def test_mood():
+    print("  → Testing mood questions...")
     r = client.get(f"{BASE_URL}/mood/questions")
     r.raise_for_status()
 
+    print("  → Logging mood...")
     r = client.post(
         f"{BASE_URL}/mood/log",
         headers=HEADERS,
@@ -75,6 +80,7 @@ def test_mood():
     )
     r.raise_for_status()
 
+    print("  → Getting mood history...")
     r = client.get(f"{BASE_URL}/mood/history", headers=HEADERS)
     r.raise_for_status()
 
@@ -83,13 +89,19 @@ def test_mood():
 # ============================================================================
 
 def test_skin():
-    with open(TEST_IMAGE, "rb") as f:
-        r = client.post(
-            f"{BASE_URL}/skin/infer",
-            files={"file": ("face.jpg", f, "image/jpeg")}
-        )
-    r.raise_for_status()
+    print("  → Testing skin inference...")
+    try:
+        with open(TEST_IMAGE, "rb") as f:
+            r = client.post(
+                f"{BASE_URL}/skin/infer",
+                files={"file": ("face.jpg", f, "image/jpeg")}
+            )
+        r.raise_for_status()
+    except FileNotFoundError:
+        print(f"  [yellow]⚠ Skipping: {TEST_IMAGE} not found[/yellow]")
+        return
 
+    print("  → Uploading skin image...")
     with open(TEST_IMAGE, "rb") as f:
         r = client.post(
             f"{BASE_URL}/skin/upload",
@@ -100,12 +112,14 @@ def test_skin():
     r.raise_for_status()
     image_id = r.json()["image_id"]
 
+    print(f"  → Analyzing image {image_id}...")
     r = client.post(
         f"{BASE_URL}/skin/analyze/{image_id}",
         headers=HEADERS
     )
     r.raise_for_status()
 
+    print("  → Getting my images...")
     r = client.get(f"{BASE_URL}/skin/my-images", headers=HEADERS)
     r.raise_for_status()
 
@@ -114,13 +128,27 @@ def test_skin():
 # ============================================================================
 
 def test_reports():
+    print("  → Getting weekly report (JSON)...")
     r = client.get(f"{BASE_URL}/reports/weekly", headers=HEADERS)
     r.raise_for_status()
+    print(f"    Status: {r.status_code}")
+    report_data = r.json()
+    print(f"    Week: {report_data.get('week_start')} to {report_data.get('week_end')}")
 
+    print("  → Getting weekly report (HTML)...")
     r = client.get(f"{BASE_URL}/reports/weekly/html", headers=HEADERS)
     r.raise_for_status()
+    print(f"    Status: {r.status_code}, HTML length: {len(r.text)} chars")
 
+    print("  → Listing all reports...")
     r = client.get(f"{BASE_URL}/reports/weekly/list", headers=HEADERS)
+    r.raise_for_status()
+    reports = r.json()
+    print(f"    Found {len(reports)} report(s)")
+    
+    # Optional: Test with limit parameter
+    print("  → Testing list with limit...")
+    r = client.get(f"{BASE_URL}/reports/weekly/list?limit=5", headers=HEADERS)
     r.raise_for_status()
 
 # ============================================================================
@@ -128,15 +156,19 @@ def test_reports():
 # ============================================================================
 
 def test_engagement():
+    print("  → Getting streak...")
     r = client.get(f"{BASE_URL}/engagement/streak", headers=HEADERS)
     r.raise_for_status()
 
+    print("  → Checking in...")
     r = client.post(f"{BASE_URL}/engagement/check-in", headers=HEADERS)
     r.raise_for_status()
 
+    print("  → Getting dashboard...")
     r = client.get(f"{BASE_URL}/engagement/dashboard", headers=HEADERS)
     r.raise_for_status()
 
+    print("  → Getting daily insights...")
     r = client.get(f"{BASE_URL}/engagement/insights/daily", headers=HEADERS)
     r.raise_for_status()
 
@@ -145,9 +177,11 @@ def test_engagement():
 # ============================================================================
 
 def test_preferences():
+    print("  → Getting preferences...")
     r = client.get(f"{BASE_URL}/engagement/preferences", headers=HEADERS)
     r.raise_for_status()
 
+    print("  → Updating preferences...")
     r = client.put(
         f"{BASE_URL}/engagement/preferences",
         headers=HEADERS,
@@ -167,19 +201,25 @@ def test_preferences():
 # ============================================================================
 
 def test_voice():
+    print("  → Getting voice prompt...")
     r = client.get(f"{BASE_URL}/voice/prompt", headers=HEADERS)
     r.raise_for_status()
 
+    print("  → Getting prompt preview...")
     r = client.get(f"{BASE_URL}/voice/prompt-preview/70")
     r.raise_for_status()
 
-    with open(TEST_AUDIO, "rb") as f:
-        r = client.post(
-            f"{BASE_URL}/voice/mood/analyze",
-            headers=HEADERS,
-            files={"audio": ("voice.wav", f, "audio/wav")}
-        )
-    r.raise_for_status()
+    print("  → Analyzing voice mood...")
+    try:
+        with open(TEST_AUDIO, "rb") as f:
+            r = client.post(
+                f"{BASE_URL}/voice/mood/analyze",
+                headers=HEADERS,
+                files={"audio": ("voice.wav", f, "audio/wav")}
+            )
+        r.raise_for_status()
+    except FileNotFoundError:
+        print(f"  [yellow]⚠ Skipping: {TEST_AUDIO} not found[/yellow]")
 
 # ============================================================================
 # MAIN
@@ -214,5 +254,7 @@ if __name__ == "__main__":
 
     if FAILED:
         print(f"\n[red]❌ {len(FAILED)} test group(s) failed[/red]")
+        exit(1)
     else:
         print("\n[bold green]✅ ALL TESTS PASSED[/bold green]\n")
+        exit(0)

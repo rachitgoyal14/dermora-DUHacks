@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, Text, DateTime
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 
 from app.entities.base import Base
@@ -22,5 +22,8 @@ class User(Base):
     age = Column(String, nullable=True)
     gender = Column(String, nullable=True)
     primary_skin_issue = Column(String, nullable=True)
+
+    # 📦 USER PREFERENCES & SETTINGS
+    user_metadata = Column(JSONB, nullable=True, default=dict)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

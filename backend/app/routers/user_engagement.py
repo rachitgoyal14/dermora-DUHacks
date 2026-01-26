@@ -515,7 +515,10 @@ async def get_mood_summary(
 # ============================================================================
 # ENDPOINT 6 & 7: USER PREFERENCES
 # ============================================================================
-
+# FIXED: Only the preferences endpoints (line 520-580)
+# Replace these two functions in your user_engagement.py
+# FIXED: Only the preferences endpoints (line 520-580)
+# Replace these two functions in your user_engagement.py
 @router.get("/preferences", response_model=UserPreferences)
 async def get_user_preferences(
     db: AsyncSession = Depends(get_db),
@@ -523,9 +526,15 @@ async def get_user_preferences(
 ):
     """Get user preferences and settings."""
     
-    # For now, return from user metadata if it exists
-    # You can add a UserPreferences table later
-    metadata = user.metadata or {}
+    try:
+        if user.user_metadata is None:
+            metadata = {}
+        elif isinstance(user.user_metadata, dict):
+            metadata = user.user_metadata
+        else:
+            metadata = {}
+    except Exception:
+        metadata = {}
     
     return UserPreferences(
         notification_time=metadata.get("notification_time", "09:00"),
@@ -545,11 +554,10 @@ async def update_user_preferences(
 ):
     """Update user preferences."""
     
-    # Store in user metadata
-    if not user.metadata:
-        user.metadata = {}
+    if user.user_metadata is None or not isinstance(user.user_metadata, dict):
+        user.user_metadata = {}
     
-    user.metadata.update({
+    user.user_metadata.update({
         "notification_time": preferences.notification_time,
         "theme": preferences.theme,
         "onboarding_completed": preferences.onboarding_completed,
@@ -557,6 +565,9 @@ async def update_user_preferences(
         "reminder_enabled": preferences.reminder_enabled,
         "language": preferences.language
     })
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(user, "user_metadata")
     
     await db.commit()
     await db.refresh(user)
