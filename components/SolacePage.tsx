@@ -9,7 +9,7 @@ import {
 } from '../services/api';
 import { connectToSolaceLive } from '../services/gemini';
 import { RefreshCw } from 'lucide-react';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 /* ======================================================
    ANDROID-SAFE GLOBAL AUDIO STATE
 ====================================================== */

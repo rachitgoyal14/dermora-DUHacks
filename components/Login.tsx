@@ -1,6 +1,6 @@
 import { SignIn } from '@clerk/clerk-react';
 import SkinLayersVisual from './SkinLayersVisual';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const Login: React.FC = () => {
     return (
         <div className="fixed inset-0 w-full h-full bg-[#FFF5F5] font-sans text-skin-text flex flex-col justify-between overflow-hidden">

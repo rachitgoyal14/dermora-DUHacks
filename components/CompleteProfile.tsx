@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import SkinLayersVisual from './SkinLayersVisual';
 import { ArrowLeft, User, Mail, Phone, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
@@ -29,7 +30,8 @@ const CompleteProfile: React.FC = () => {
 
         try {
             // Call backend API
-            const response = await axios.post('https://continually-removing-delayed-program.trycloudflare.com/auth/register', formData);
+            const response = await axios.post(`${BACKEND_URL}/auth/register`, formData);
+
             if (response.status === 200) {
                 // Store user info if needed
                 navigate('/home');

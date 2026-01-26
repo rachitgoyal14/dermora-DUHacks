@@ -26,7 +26,7 @@ import {
 
 const isNative = Capacitor.isNativePlatform();
 // const BACKEND_URL = "http://localhost:8000";
-const BACKEND_URL = "https://continually-removing-delayed-program.trycloudflare.com";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Skeleton Pulse Component
 const SkeletonPulse: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className = '', style }) => (
@@ -495,10 +495,13 @@ useEffect(() => {
   const syncUser = async () => {
     try {
       const token = await getToken();
-      const res = await fetch("https://continually-removing-delayed-program.trycloudflare.com/auth/sync-user", {
+      const res = await fetch(`${BACKEND_URL}/auth/sync-user`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        });
+
       const data = await res.json();
       if (data.uuid) {
         setBackendUserId(data.uuid);

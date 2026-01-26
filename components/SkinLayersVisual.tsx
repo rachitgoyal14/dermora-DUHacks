@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ScanIcon, DropIcon, FileTextIcon } from './icons/AppIcons';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const FloatingDot: React.FC<{
   icon: React.ReactNode;
   x: string;

@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 import BottomNav from './BottomNav';
 import { useBackendAuth } from '../contexts/AuthContext';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 interface SkeletonPulseProps extends React.HTMLAttributes<HTMLDivElement> {
     className?: string;
 }
@@ -258,7 +258,7 @@ const InsightsPage: React.FC = () => {
                 const token = await getToken();
 
                 // Fetch dashboard stats
-                const dashboardResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/engagement/dashboard', {
+                const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'X-User-Id': backendUserId
@@ -273,7 +273,7 @@ const InsightsPage: React.FC = () => {
 
                 // Fetch mood history chart
                 const moodHistoryResponse = await fetch(
-                    `https://continually-removing-delayed-program.trycloudflare.com/engagement/mood/history?days=${timeRange}`,
+                    `${BACKEND_URL}/engagement/mood/history?days=${timeRange}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -289,7 +289,7 @@ const InsightsPage: React.FC = () => {
                 }
 
                 // Fetch mood summary
-                const moodSummaryResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/engagement/mood/summary', {
+                const moodSummaryResponse = await fetch(`${BACKEND_URL}/engagement/mood/summary`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'X-User-Id': backendUserId
@@ -303,7 +303,7 @@ const InsightsPage: React.FC = () => {
                 }
 
                 // Fetch improvement tracker data (skin progress)
-                const improvementResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/skin/improvement-tracker', {
+                const improvementResponse = await fetch(`${BACKEND_URL}/skin/improvement-tracker`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'X-User-Id': backendUserId
@@ -319,7 +319,7 @@ const InsightsPage: React.FC = () => {
                 }
 
                 // Fetch weekly reports - FIX: use correct endpoint
-                const reportsResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/reports/weekly/list?limit=10', {
+                const reportsResponse = await fetch(`${BACKEND_URL}/reports/weekly/list?limit=10`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'X-User-Id': backendUserId
@@ -355,7 +355,7 @@ const InsightsPage: React.FC = () => {
         try {
             const token = await getToken();
             // Correct endpoint: /reports/weekly/html with week_start query param
-            const response = await fetch(`https://continually-removing-delayed-program.trycloudflare.com/reports/weekly/html?week_start=${weekStart}`, {
+            const response = await fetch(`${BACKEND_URL}/reports/weekly/html?week_start=${weekStart}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'X-User-Id': backendUserId
@@ -383,7 +383,7 @@ const InsightsPage: React.FC = () => {
 
         try {
             const token = await getToken();
-            const response = await fetch(`https://continually-removing-delayed-program.trycloudflare.com/reports/weekly/${reportId}`, {
+            const response = await fetch(`${BACKEND_URL}/reports/weekly/${reportId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,

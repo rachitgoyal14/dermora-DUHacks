@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 interface AuthContextType {
     backendUserId: string | null;
     isLoading: boolean;
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setIsLoading(true);
                 const token = await getToken();
                 
-                const response = await fetch("https://continually-removing-delayed-program.trycloudflare.com/auth/sync-user", {
+                const response = await fetch(`${BACKEND_URL}/auth/sync-user`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` },
                 });

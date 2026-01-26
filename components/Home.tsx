@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 import { useBackendAuth } from '../contexts/AuthContext';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 // Define proper types based on backend response
 interface StreakData {
     current_streak: number;
@@ -199,12 +199,13 @@ const Home: React.FC = () => {
                 const token = await getToken();
                 
                 // Fetch dashboard data
-                const dashboardResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/engagement/dashboard', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
+                const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'X-User-Id': backendUserId,
+                },
                 });
+
                 
                 if (!dashboardResponse.ok) {
                     throw new Error('Failed to fetch dashboard');
@@ -213,12 +214,13 @@ const Home: React.FC = () => {
                 const dashboard = await dashboardResponse.json();
                 
                 // Fetch daily insight
-                const insightResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/engagement/insights/daily', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
+                const insightResponse = await fetch(`${BACKEND_URL}/engagement/insights/daily`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'X-User-Id': backendUserId,
+                },
                 });
+
                 
                 let insight = null;
                 if (insightResponse.ok) {
@@ -246,13 +248,14 @@ const Home: React.FC = () => {
             setCheckingIn(true);
             const token = await getToken();
             
-            const response = await fetch('https://continually-removing-delayed-program.trycloudflare.com/engagement/check-in', {
+            const response = await fetch(`${BACKEND_URL}/engagement/check-in`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
+                    Authorization: `Bearer ${token}`,
+                    'X-User-Id': backendUserId,
+                },
             });
+
             
             if (!response.ok) {
                 throw new Error('Check-in failed');
@@ -261,13 +264,13 @@ const Home: React.FC = () => {
             const result: CheckInResponse = await response.json();
             
             // Refresh dashboard to get updated streak
-            const dashboardResponse = await fetch('https://continually-removing-delayed-program.trycloudflare.com/engagement/dashboard', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
+          const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'X-User-Id': backendUserId,
+                },
             });
-            
+
             if (dashboardResponse.ok) {
                 const dashboard = await dashboardResponse.json();
                 setDashboardData(dashboard);

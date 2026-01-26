@@ -8,6 +8,7 @@ interface FeatureCardProps {
   icon: React.ReactNode;
   index: number;
 }
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ title, subtitle, visual, icon, index }) => {
   return (

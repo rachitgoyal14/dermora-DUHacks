@@ -9,7 +9,7 @@ import { SadFace, NeutralFace, GoodFace, HappyFace } from './MoodFaces';
 import BottomNav from './BottomNav';
 import { logMood, getMoodQuestions } from '../services/api';
 import { Check, RefreshCw } from 'lucide-react';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 // Components
 const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
     <motion.button
@@ -73,7 +73,7 @@ const MoodPage: React.FC = () => {
         const syncUser = async () => {
             try {
                 const token = await getToken();
-                const response = await fetch("https://continually-removing-delayed-program.trycloudflare.com/auth/sync-user", {
+                const response = await fetch(`${BACKEND_URL}/auth/sync-user`, {
                     method: "POST",
                     headers: {
                         Authorization: `Bearer ${token}`,

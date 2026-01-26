@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Icons
 const MoonIcon = () => (

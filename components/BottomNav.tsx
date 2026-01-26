@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Updated Icons for 4-tab layout
 const HomeIcon = ({ active }: { active: boolean }) => (

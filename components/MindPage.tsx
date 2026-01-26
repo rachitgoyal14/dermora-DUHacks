@@ -22,7 +22,7 @@ import {
 } from '../services/api';
 import { connectToSolaceLive } from '../services/gemini';
 import { SadFace, NeutralFace, GoodFace, HappyFace } from './MoodFaces';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 type SessionStatus = 'idle' | 'loading' | 'connected' | 'speaking' | 'processing';
 type ViewMode = 'hub' | 'mood' | 'voice';
 
