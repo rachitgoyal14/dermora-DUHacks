@@ -8,12 +8,14 @@ import {
     Calendar,
     RefreshCw,
     ChevronRight,
-    FileText,
     Camera,
     Activity,
     BarChart3,
     X,
-    Trash2
+    Trash2,
+    Download,
+    Sparkles,
+    Loader2
 } from 'lucide-react';
 import {
     AreaChart,
@@ -26,7 +28,17 @@ import {
 } from 'recharts';
 import BottomNav from './BottomNav';
 import { useBackendAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { 
+    generateWeeklyReport, 
+    getWeeklyReportHtml, 
+    getWeeklyReportsList,
+    deleteWeeklyReport 
+} from '../services/api';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 interface SkeletonPulseProps extends React.HTMLAttributes<HTMLDivElement> {
     className?: string;
 }
@@ -43,16 +55,13 @@ const SkeletonPulse: React.FC<SkeletonPulseProps> = ({
             background: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)',
             backgroundSize: '200% 100%',
             animation: 'shimmer 1.5s ease-in-out infinite',
-            ...style, // ✅ allow height override
+            ...style,
         }}
     />
 );
 
-
-// Insights Page Skeleton Component
 const InsightsSkeleton: React.FC = () => (
     <div className="min-h-screen w-full bg-[#FFF5F5] font-sans overflow-x-hidden pb-24">
-        {/* Shimmer Animation Styles */}
         <style>{`
             @keyframes shimmer {
                 0% { background-position: 200% 0; }
@@ -60,7 +69,6 @@ const InsightsSkeleton: React.FC = () => (
             }
         `}</style>
 
-        {/* Header Skeleton */}
         <nav className="sticky top-0 z-40 px-5 py-4 bg-[#FFF5F5]/95 backdrop-blur-md border-b border-gray-100">
             <div className="flex justify-between items-center max-w-md mx-auto">
                 <div>
@@ -72,105 +80,14 @@ const InsightsSkeleton: React.FC = () => (
         </nav>
 
         <div className="px-5 py-6 max-w-md mx-auto space-y-6">
-            {/* Quick Stats Section Skeleton */}
-            <div>
-                <SkeletonPulse className="h-4 w-24 rounded mb-3" />
-                <div className="grid grid-cols-2 gap-3">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="bg-white/60 rounded-2xl p-4 border border-gray-100">
-                            <SkeletonPulse className="w-5 h-5 rounded mb-2" />
-                            <SkeletonPulse className="h-8 w-12 rounded mb-1" />
-                            <SkeletonPulse className="h-3 w-20 rounded" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Mood Trends Chart Skeleton */}
-            <div className="bg-white rounded-3xl p-5 shadow-md border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                    <SkeletonPulse className="h-4 w-28 rounded" />
-                    <div className="flex gap-2">
-                        <SkeletonPulse className="h-6 w-10 rounded-full" />
-                        <SkeletonPulse className="h-6 w-10 rounded-full" />
-                        <SkeletonPulse className="h-6 w-10 rounded-full" />
+            <div className="grid grid-cols-2 gap-3">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-white/60 rounded-2xl p-4 border border-gray-100">
+                        <SkeletonPulse className="w-5 h-5 rounded mb-2" />
+                        <SkeletonPulse className="h-8 w-12 rounded mb-1" />
+                        <SkeletonPulse className="h-3 w-20 rounded" />
                     </div>
-                </div>
-                {/* Chart Area Skeleton */}
-                <div className="h-[200px] flex items-end justify-between gap-2 px-2">
-                    {[80, 120, 60, 140, 90, 110, 70].map((height, i) => (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                            <SkeletonPulse 
-                                className="w-full rounded-t" 
-                                style={{ height: `${height}px` }} 
-                            />
-                            <SkeletonPulse className="h-3 w-8 rounded" />
-                        </div>
-                    ))}
-                </div>
-                {/* Summary Stats Skeleton */}
-                <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3 text-center">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i}>
-                            <SkeletonPulse className="h-3 w-16 rounded mx-auto mb-1" />
-                            <SkeletonPulse className="h-6 w-10 rounded mx-auto" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Skin Progress Skeleton */}
-            <div className="bg-white rounded-3xl p-5 shadow-md border border-gray-100">
-                <SkeletonPulse className="h-4 w-28 rounded mb-4" />
-                <div className="space-y-3 mb-4">
-                    {[...Array(2)].map((_, i) => (
-                        <div key={i} className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                            <div className="flex items-center justify-between mb-2">
-                                <SkeletonPulse className="h-5 w-16 rounded" />
-                                <SkeletonPulse className="h-4 w-20 rounded" />
-                            </div>
-                            <SkeletonPulse className="h-4 w-full rounded mb-1" />
-                            <SkeletonPulse className="h-4 w-3/4 rounded" />
-                        </div>
-                    ))}
-                </div>
-                <div className="pt-4 border-t border-gray-100 text-center">
-                    <SkeletonPulse className="h-3 w-24 rounded mx-auto mb-1" />
-                    <SkeletonPulse className="h-8 w-20 rounded mx-auto mb-1" />
-                    <SkeletonPulse className="h-3 w-28 rounded mx-auto" />
-                </div>
-            </div>
-
-            {/* Weekly Reports Section Skeleton */}
-            <div>
-                <div className="flex items-center justify-between mb-3">
-                    <SkeletonPulse className="h-4 w-28 rounded" />
-                    <SkeletonPulse className="h-5 w-5 rounded" />
-                </div>
-                <div className="space-y-3">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <SkeletonPulse className="h-3 w-32 rounded" />
-                                        <SkeletonPulse className="h-5 w-5 rounded" />
-                                    </div>
-                                    <SkeletonPulse className="h-4 w-full rounded mb-1" />
-                                    <SkeletonPulse className="h-4 w-2/3 rounded mb-2" />
-                                    <div className="flex items-center gap-3">
-                                        <SkeletonPulse className="h-3 w-20 rounded" />
-                                        <SkeletonPulse className="h-3 w-16 rounded" />
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-2 ml-2">
-                                    <SkeletonPulse className="w-8 h-8 rounded-full" />
-                                    <SkeletonPulse className="w-5 h-5 rounded" />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                ))}
             </div>
         </div>
 
@@ -182,11 +99,9 @@ interface Report {
     report_id: string;
     week_start: string;
     week_end: string;
-    summary: string;
-    trend: string;
+    condition_summary: string;
+    skin_trend: string;
     generated_at: string;
-    has_html: boolean;
-    metrics: any;
 }
 
 interface MoodDataPoint {
@@ -232,8 +147,14 @@ type TimeRange = '7' | '14' | '30';
 const InsightsPage: React.FC = () => {
     const { getToken } = useAuth();
     const { backendUserId, isLoading: authLoading } = useBackendAuth();
+    const { success, error, warning, info } = useToast();
 
     const [loading, setLoading] = useState(true);
+    const [generatingReport, setGeneratingReport] = useState(false);
+
+    // Confirmation dialog state
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [reportToDelete, setReportToDelete] = useState<string | null>(null);
 
     // Reports state
     const [reports, setReports] = useState<Report[]>([]);
@@ -248,154 +169,199 @@ const InsightsPage: React.FC = () => {
     const [moodSummary, setMoodSummary] = useState<MoodSummary | null>(null);
     const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
-    // Fetch all data
-    useEffect(() => {
-        const fetchAllData = async () => {
-            if (!backendUserId) return;
+    const fetchAllData = async () => {
+        if (!backendUserId) return;
 
-            try {
-                setLoading(true);
-                const token = await getToken();
+        try {
+            setLoading(true);
+            const token = await getToken();
 
-                // Fetch dashboard stats
-                const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
-                });
-                
-                if (dashboardResponse.ok) {
-                    const dashboard = await dashboardResponse.json();
-                    setDashboardStats(dashboard);
-                    console.log('Dashboard stats:', dashboard);
+            const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-User-Id': backendUserId
                 }
-
-                // Fetch mood history chart
-                const moodHistoryResponse = await fetch(
-                    `${BACKEND_URL}/engagement/mood/history?days=${timeRange}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'X-User-Id': backendUserId
-                        }
-                    }
-                );
-                
-                if (moodHistoryResponse.ok) {
-                    const moodHistoryData = await moodHistoryResponse.json();
-                    setMoodChartData(moodHistoryData.mood_data || []);
-                    console.log('Mood history:', moodHistoryData);
-                }
-
-                // Fetch mood summary
-                const moodSummaryResponse = await fetch(`${BACKEND_URL}/engagement/mood/summary`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
-                });
-                
-                if (moodSummaryResponse.ok) {
-                    const summary = await moodSummaryResponse.json();
-                    setMoodSummary(summary);
-                    console.log('Mood summary:', summary);
-                }
-
-                // Fetch improvement tracker data (skin progress)
-                const improvementResponse = await fetch(`${BACKEND_URL}/skin/improvement-tracker`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
-                });
-                
-                if (improvementResponse.ok) {
-                    const improvement = await improvementResponse.json();
-                    setImprovementData(improvement);
-                    console.log('Improvement data:', improvement);
-                } else {
-                    console.error('Failed to fetch improvement data:', improvementResponse.status);
-                }
-
-                // Fetch weekly reports - FIX: use correct endpoint
-                const reportsResponse = await fetch(`${BACKEND_URL}/reports/weekly/list?limit=10`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
-                });
-                
-                if (reportsResponse.ok) {
-                    const reportsData = await reportsResponse.json();
-                    setReports(reportsData.reports || []);
-                    console.log('Reports:', reportsData);
-                } else {
-                    console.error('Failed to fetch reports:', reportsResponse.status);
-                    setReports([]);
-                }
-
-            } catch (err) {
-                console.error("Failed to fetch insights:", err);
-            } finally {
-                setLoading(false);
-                setLoadingReports(false);
+            });
+            
+            if (dashboardResponse.ok) {
+                const dashboard = await dashboardResponse.json();
+                setDashboardStats(dashboard);
             }
-        };
 
+            const moodHistoryResponse = await fetch(
+                `${BACKEND_URL}/engagement/mood/history?days=${timeRange}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-User-Id': backendUserId
+                    }
+                }
+            );
+            
+            if (moodHistoryResponse.ok) {
+                const moodHistoryData = await moodHistoryResponse.json();
+                setMoodChartData(moodHistoryData.mood_data || []);
+            }
+
+            const moodSummaryResponse = await fetch(`${BACKEND_URL}/engagement/mood/summary`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-User-Id': backendUserId
+                }
+            });
+            
+            if (moodSummaryResponse.ok) {
+                const summary = await moodSummaryResponse.json();
+                setMoodSummary(summary);
+            }
+
+            const improvementResponse = await fetch(`${BACKEND_URL}/skin/improvement-tracker`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-User-Id': backendUserId
+                }
+            });
+            
+            if (improvementResponse.ok) {
+                const improvement = await improvementResponse.json();
+                setImprovementData(improvement);
+            }
+
+            await fetchReports();
+
+        } catch (err) {
+            console.error("Failed to fetch insights:", err);
+            error("Failed to load insights data");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchReports = async () => {
+        if (!backendUserId) return;
+        
+        try {
+            setLoadingReports(true);
+            const token = await getToken();
+            
+            const reportsData = await getWeeklyReportsList(10, token, backendUserId);
+            setReports(reportsData.reports || []);
+        } catch (err) {
+            console.error("Failed to fetch reports:", err);
+            setReports([]);
+        } finally {
+            setLoadingReports(false);
+        }
+    };
+
+    useEffect(() => {
         if (backendUserId) {
             fetchAllData();
         }
-    }, [backendUserId, getToken, timeRange]);
+    }, [backendUserId, timeRange]);
 
-    // View report - FIX: use correct endpoint
+    const handleGenerateReport = async () => {
+        if (!backendUserId) {
+            error('User ID not available. Please log in again.');
+            return;
+        }
+
+        try {
+            setGeneratingReport(true);
+            
+            const token = await getToken();
+            if (!token) {
+                throw new Error('Authentication token not available');
+            }
+            
+            const reportData = await generateWeeklyReport(true, token, backendUserId);
+            
+            const isEmptyWeek = reportData.skin_trend === 'insufficient_data' || 
+                               reportData.metrics?.total_images_uploaded === 0;
+            
+            if (isEmptyWeek) {
+                info(
+                    'Weekly Report Generated\n\nNote: No data was found for this week. Start uploading skin photos and logging mood to get personalized insights!',
+                    6000
+                );
+            } else {
+                success('Weekly report generated successfully!');
+            }
+            
+            await fetchReports();
+            
+        } catch (err: any) {
+            console.error("Failed to generate report:", err);
+            
+            let errorMessage = 'An error occurred while generating the report.';
+            
+            if (err.response?.data?.detail) {
+                errorMessage = err.response.data.detail;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            error(`Report Generation Failed\n\n${errorMessage}`, 6000);
+            
+        } finally {
+            setGeneratingReport(false);
+        }
+    };
+
     const handleViewReport = async (weekStart: string) => {
         if (!backendUserId) return;
 
         try {
             const token = await getToken();
-            // Correct endpoint: /reports/weekly/html with week_start query param
-            const response = await fetch(`${BACKEND_URL}/reports/weekly/html?week_start=${weekStart}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
-            });
-            
-            if (response.ok) {
-                const htmlContent = await response.text();
-                setReportHtml(htmlContent);
-                setSelectedReport(weekStart);
-            } else {
-                console.error('Failed to fetch report HTML:', response.status);
-                setReportHtml('<p>Failed to load report</p>');
-            }
+            const htmlContent = await getWeeklyReportHtml(weekStart, token, backendUserId);
+            setReportHtml(htmlContent);
+            setSelectedReport(weekStart);
         } catch (err) {
             console.error("Failed to fetch report:", err);
+            error('Failed to load report');
             setReportHtml('<p>Error loading report</p>');
         }
     };
 
-    // Delete report
+    const handleExportPDF = () => {
+        if (!reportHtml) return;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(reportHtml);
+            printWindow.document.close();
+            
+            printWindow.onload = () => {
+                printWindow.print();
+            };
+            
+            success('Opening print dialog...');
+        } else {
+            error('Failed to open print window. Please check your popup settings.');
+        }
+    };
+
     const handleDeleteReport = async (reportId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!backendUserId || !confirm('Delete this report?')) return;
+        if (!backendUserId) return;
+
+        setReportToDelete(reportId);
+        setDeleteConfirmOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!reportToDelete || !backendUserId) return;
 
         try {
             const token = await getToken();
-            const response = await fetch(`${BACKEND_URL}/reports/weekly/${reportId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
-            });
-            
-            if (response.ok) {
-                setReports(reports.filter(r => r.report_id !== reportId));
-            }
+            await deleteWeeklyReport(reportToDelete, token, backendUserId);
+            setReports(reports.filter(r => r.report_id !== reportToDelete));
+            success('Report deleted successfully');
         } catch (err) {
             console.error("Failed to delete report:", err);
+            error('Failed to delete report');
+        } finally {
+            setReportToDelete(null);
         }
     };
 
@@ -410,7 +376,6 @@ const InsightsPage: React.FC = () => {
         return '➡️';
     };
 
-    // Show skeleton while loading instead of spinner
     if (authLoading || loading) {
         return <InsightsSkeleton />;
     }
@@ -418,7 +383,6 @@ const InsightsPage: React.FC = () => {
     return (
         <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-skin-text overflow-x-hidden pb-24">
 
-            {/* Header */}
             <motion.nav
                 className="sticky top-0 z-40 px-5 py-4 bg-[#FFF5F5]/95 backdrop-blur-md border-b border-gray-100"
                 initial={{ y: -20, opacity: 0 }}
@@ -437,7 +401,26 @@ const InsightsPage: React.FC = () => {
 
             <div className="px-5 py-6 max-w-md mx-auto space-y-6">
 
-                {/* Statistics Cards */}
+                <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={handleGenerateReport}
+                    disabled={generatingReport}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                >
+                    {generatingReport ? (
+                        <>
+                            <Loader2 className="animate-spin" size={20} />
+                            <span className="font-semibold">Generating Report...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles size={20} />
+                            <span className="font-semibold">Generate Weekly Report</span>
+                        </>
+                    )}
+                </motion.button>
+
                 {dashboardStats && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -482,7 +465,6 @@ const InsightsPage: React.FC = () => {
                     </motion.div>
                 )}
 
-                {/* Mood Trends Chart */}
                 {moodChartData.length > 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -585,7 +567,6 @@ const InsightsPage: React.FC = () => {
                     </motion.div>
                 )}
 
-                {/* Skin Improvement Chart */}
                 {improvementData && improvementData.weekly_improvements && improvementData.weekly_improvements.length > 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -634,7 +615,6 @@ const InsightsPage: React.FC = () => {
                     </motion.div>
                 )}
 
-                {/* Weekly Reports Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -644,7 +624,12 @@ const InsightsPage: React.FC = () => {
                         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
                             Weekly Reports
                         </h2>
-                        <FileText size={18} className="text-gray-400" />
+                        <button
+                            onClick={fetchReports}
+                            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                        >
+                            <RefreshCw size={16} className="text-gray-600" />
+                        </button>
                     </div>
 
                     {loadingReports ? (
@@ -656,7 +641,7 @@ const InsightsPage: React.FC = () => {
                         <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
                             <Calendar className="mx-auto mb-3 text-gray-300" size={40} />
                             <p className="text-sm text-gray-500 mb-1">No reports yet</p>
-                            <p className="text-xs text-gray-400">Start tracking to generate reports!</p>
+                            <p className="text-xs text-gray-400">Generate your first report above!</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -675,22 +660,16 @@ const InsightsPage: React.FC = () => {
                                                 <span className="text-xs font-medium text-gray-500">
                                                     {formatDate(report.week_start)} - {formatDate(report.week_end)}
                                                 </span>
-                                                <span className="text-lg">{getTrendIcon(report.trend)}</span>
+                                                <span className="text-lg">{getTrendIcon(report.skin_trend)}</span>
                                             </div>
                                             <p className="text-sm text-gray-700 line-clamp-2 mb-2">
-                                                {report.summary}
+                                                {report.condition_summary}
                                             </p>
                                             <div className="flex items-center gap-3 text-xs text-gray-500">
                                                 <span className="flex items-center gap-1">
                                                     <TrendingUp size={12} />
-                                                    {report.trend}
+                                                    {report.skin_trend.substring(0, 30)}...
                                                 </span>
-                                                {report.metrics?.days_tracked && (
-                                                    <>
-                                                        <span>•</span>
-                                                        <span>{report.metrics.days_tracked} days</span>
-                                                    </>
-                                                )}
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-2 ml-2">
@@ -713,7 +692,6 @@ const InsightsPage: React.FC = () => {
 
             <BottomNav />
 
-            {/* Report Viewer Modal */}
             <AnimatePresence>
                 {reportHtml && (
                     <motion.div
@@ -737,15 +715,24 @@ const InsightsPage: React.FC = () => {
                                 <h3 className="font-display font-bold text-lg text-[#1A1A1A]">
                                     Weekly Report
                                 </h3>
-                                <button
-                                    onClick={() => {
-                                        setReportHtml(null);
-                                        setSelectedReport(null);
-                                    }}
-                                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                                >
-                                    <X size={18} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleExportPDF}
+                                        className="px-4 py-2 rounded-full bg-purple-100 hover:bg-purple-200 flex items-center gap-2 transition-colors text-purple-700 font-medium text-sm"
+                                    >
+                                        <Download size={16} />
+                                        Export PDF
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setReportHtml(null);
+                                            setSelectedReport(null);
+                                        }}
+                                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
                             </div>
                             <div
                                 className="overflow-y-auto p-6"
@@ -756,6 +743,20 @@ const InsightsPage: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={deleteConfirmOpen}
+                title="Delete Report"
+                message="Are you sure you want to delete this weekly report? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                confirmVariant="danger"
+                onConfirm={confirmDelete}
+                onCancel={() => {
+                    setDeleteConfirmOpen(false);
+                    setReportToDelete(null);
+                }}
+            />
         </div>
     );
 };

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-// Base config (shared)
-const BASE_URL = 'https://continually-removing-delayed-program.trycloudflare.com';
+// Base config - NOW USES ENVIRONMENT VARIABLE
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Factory to create auth-aware axios instance with X-User-Id header
@@ -303,9 +303,75 @@ export const getWeeklyReport = async (token?: string, userId?: string) => {
     return response.data;
 };
 
-export const getWeeklyReportHtml = async (token?: string, userId?: string) => {
+// Updated generateWeeklyReport function for api.ts
+// Handles both successful reports and empty week reports (200 status)
+
+export const generateWeeklyReport = async (
+    forceRegenerate: boolean = true, 
+    token?: string, 
+    userId?: string
+) => {
+    const apiInstance = createApi(token, userId);
+    
+    console.group("🔍 generateWeeklyReport DEBUG — " + new Date().toISOString());
+    console.log("Backend URL:            ", BASE_URL);
+    console.log("Full endpoint:          ", `${BASE_URL}/reports/weekly`);
+    console.log("Force regenerate:       ", forceRegenerate);
+    console.log("Token present:          ", !!token);
+    console.log("User-ID present:        ", !!userId);
+    console.log("Headers:", {
+        'Authorization': token ? `Bearer ${token.substring(0, 20)}...` : 'MISSING',
+        'X-User-Id': userId || 'MISSING'
+    });
+    console.groupEnd();
+    
+    try {
+        const response = await apiInstance.get('/reports/weekly', {
+            params: { force_regenerate: forceRegenerate }
+        });
+        
+        console.log("✅ Report generated successfully:", response.data);
+        
+        // Check if it's an empty week report
+        const isEmptyWeek = response.data.skin_trend === 'insufficient_data' || 
+                           response.data.metrics?.total_images_uploaded === 0;
+        
+        if (isEmptyWeek) {
+            console.log("ℹ️ Empty week report - no data for this period");
+        }
+        
+        return response.data;
+        
+    } catch (error: any) {
+        console.error("❌ generateWeeklyReport failed:");
+        console.error("Status:", error.response?.status);
+        console.error("Status Text:", error.response?.statusText);
+        console.error("Error Data:", error.response?.data);
+        console.error("Full Error:", error);
+        
+        // Provide more user-friendly error messages
+        let errorMessage = 'Failed to generate report';
+        
+        if (error.response?.status === 503) {
+            errorMessage = 'Report generation service is temporarily unavailable. Please try again later.';
+        } else if (error.response?.status === 401) {
+            errorMessage = 'Authentication failed. Please log in again.';
+        } else if (error.response?.status === 500) {
+            errorMessage = 'Server error occurred while generating the report. Please try again.';
+        } else if (error.response?.data?.detail) {
+            errorMessage = error.response.data.detail;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
+    }
+};
+
+export const getWeeklyReportHtml = async (weekStart?: string, token?: string, userId?: string) => {
     const apiInstance = createApi(token, userId);
     const response = await apiInstance.get('/reports/weekly/html', {
+        params: weekStart ? { week_start: weekStart } : {},
         responseType: 'text',
     });
     return response.data;
