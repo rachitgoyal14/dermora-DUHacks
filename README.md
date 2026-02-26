@@ -28,6 +28,50 @@ Dermatological conditions are increasingly recognized as having significant psyc
 Dermora.ai reimagines dermatological care by creating a comprehensive digital platform that functions as both dermatologist and mental health therapist. By leveraging advanced artificial intelligence, real-time voice-based therapy, and multi-modal tracking systems, the platform enables patients to understand and actively manage the bidirectional relationship between their emotional state and skin health. This approach represents a paradigm shift from fragmented care to integrated, patient-centered disease management.
 
 ---
+## User Interface
+
+The Dermora.ai mobile application features an intuitive, accessibility-focused interface designed for daily interaction and long-term engagement.
+
+### Application Screenshots
+
+<div align="center">
+
+#### Dashboard and Home Screen
+<img src="./assets/screenshots/home-dashboard.png" alt="Home Dashboard" width="250"/>
+
+*Comprehensive dashboard displaying current skin condition status, recent mood entries, upcoming Solace sessions, and environmental factors.*
+
+---
+
+#### Skin Detection Interface
+<img src="./assets/screenshots/detection-flow.png" alt="Skin Detection" width="250"/>
+
+*Native camera integration for medical photography with real-time guidance for optimal image capture. Post-capture analysis displays multi-class probability distributions and confidence intervals.*
+
+---
+
+#### Mood Logging System
+<img src="./assets/screenshots/mood-logging.png" alt="Mood Logging" width="250"/>
+
+*Streamlined mood entry interface with temporal visualization of emotional patterns and correlation indicators.*
+
+---
+
+#### Solace Voice Therapy
+<img src="./assets/screenshots/solace-interface.png" alt="Solace Agent" width="250"/>
+
+*Real-time speech-to-speech interface with visual feedback during therapeutic conversations. Post-session summary displays mood score changes and key insights.*
+
+---
+
+#### Progress Tracking
+<img src="./assets/screenshots/progress-view.png" alt="Progress Tracking" width="250"/>
+
+*Longitudinal visualization of skin condition improvements with side-by-side photo comparisons and AI-generated progression analysis.*
+
+</div>
+
+---
 
 ## Key Features
 
@@ -473,50 +517,7 @@ dermora-ai/
 Complete API documentation with request/response schemas available at `/docs` endpoint when backend server is running.
 
 ---
-## User Interface
 
-The Dermora.ai mobile application features an intuitive, accessibility-focused interface designed for daily interaction and long-term engagement.
-
-### Application Screenshots
-
-<div align="center">
-
-#### Dashboard and Home Screen
-<img src="./assets/screenshots/home-dashboard.png" alt="Home Dashboard" width="250"/>
-
-*Comprehensive dashboard displaying current skin condition status, recent mood entries, upcoming Solace sessions, and environmental factors.*
-
----
-
-#### Skin Detection Interface
-<img src="./assets/screenshots/detection-flow.png" alt="Skin Detection" width="250"/>
-
-*Native camera integration for medical photography with real-time guidance for optimal image capture. Post-capture analysis displays multi-class probability distributions and confidence intervals.*
-
----
-
-#### Mood Logging System
-<img src="./assets/screenshots/mood-logging.png" alt="Mood Logging" width="250"/>
-
-*Streamlined mood entry interface with temporal visualization of emotional patterns and correlation indicators.*
-
----
-
-#### Solace Voice Therapy
-<img src="./assets/screenshots/solace-interface.png" alt="Solace Agent" width="250"/>
-
-*Real-time speech-to-speech interface with visual feedback during therapeutic conversations. Post-session summary displays mood score changes and key insights.*
-
----
-
-#### Progress Tracking
-<img src="./assets/screenshots/progress-view.png" alt="Progress Tracking" width="250"/>
-
-*Longitudinal visualization of skin condition improvements with side-by-side photo comparisons and AI-generated progression analysis.*
-
-</div>
-
----
 
 ## Model Performance and Validation
 
