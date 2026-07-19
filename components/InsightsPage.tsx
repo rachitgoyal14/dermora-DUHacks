@@ -29,8 +29,10 @@ import {
 import BottomNav from './BottomNav';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { getDashboard, getMoodHistoryChart, getMoodSummary, getImprovementTracker,
-    generateWeeklyReport, getWeeklyReportHtml, getWeeklyReportsList, deleteWeeklyReport } from '../services/api';
+import { 
+    generateWeeklyReport, getWeeklyReportHtml, deleteWeeklyReport } from '../services/api';
+import { useDashboard, useMoodSummary, useImprovementTracker, useMoodHistoryChart, useWeeklyReportsList } from '../hooks/queries';
+import { queryClient } from '../services/queryClient';
 
 
 interface SkeletonPulseProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -142,74 +144,33 @@ const InsightsPage: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const { success, error, warning, info } = useToast();
 
-    const [loading, setLoading] = useState(true);
     const [generatingReport, setGeneratingReport] = useState(false);
 
     // Confirmation dialog state
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [reportToDelete, setReportToDelete] = useState<string | null>(null);
 
-    // Reports state
-    const [reports, setReports] = useState<Report[]>([]);
-    const [loadingReports, setLoadingReports] = useState(true);
+    // Reports state via React Query
+    const { data: reportsData, isLoading: loadingReports } = useWeeklyReportsList(10);
+    const reports = reportsData?.reports || [];
+
     const [selectedReport, setSelectedReport] = useState<string | null>(null);
     const [reportHtml, setReportHtml] = useState<string | null>(null);
 
-    // Charts state
+    // TimeRange / Charts state
     const [timeRange, setTimeRange] = useState<TimeRange>('7');
-    const [moodChartData, setMoodChartData] = useState<MoodDataPoint[]>([]);
-    const [improvementData, setImprovementData] = useState<any>(null);
-    const [moodSummary, setMoodSummary] = useState<MoodSummary | null>(null);
-    const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
-    const fetchAllData = async () => {
-        if (!isAuthenticated) return;
+    // Fetch queries via React Query
+    const { data: dashboardStats, isLoading: loadingDashboard } = useDashboard();
+    const { data: moodSummary, isLoading: loadingMoodSummary } = useMoodSummary();
+    const { data: improvementData, isLoading: loadingImprovement } = useImprovementTracker();
+    const { data: moodHistoryData, isLoading: loadingMoodHistory } = useMoodHistoryChart(Number(timeRange));
 
-        try {
-            setLoading(true);
+    const moodChartData: MoodDataPoint[] = moodHistoryData
+        ? (Array.isArray(moodHistoryData) ? moodHistoryData : ((moodHistoryData as any).mood_data || []))
+        : [];
 
-            const [dashboard, moodSummaryData, improvement] = await Promise.all([
-                getDashboard().catch(() => null),
-                getMoodSummary().catch(() => null),
-                getImprovementTracker().catch(() => null),
-            ]);
-
-            if (dashboard) setDashboardStats(dashboard);
-            if (moodSummaryData) setMoodSummary(moodSummaryData);
-            if (improvement) setImprovementData(improvement);
-
-            const moodHistoryData = await getMoodHistoryChart(Number(timeRange)).catch(() => null);
-            if (moodHistoryData) setMoodChartData(Array.isArray(moodHistoryData) ? moodHistoryData : (moodHistoryData.mood_data || []));
-
-            await fetchReports();
-
-        } catch (err) {
-            console.error('Failed to fetch insights:', err);
-            error('Failed to load insights data');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchReports = async () => {
-        if (!isAuthenticated) return;
-        try {
-            setLoadingReports(true);
-            const reportsData = await getWeeklyReportsList(10);
-            setReports(reportsData.reports || []);
-        } catch (err) {
-            console.error('Failed to fetch reports:', err);
-            setReports([]);
-        } finally {
-            setLoadingReports(false);
-        }
-    };
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            fetchAllData();
-        }
-    }, [isAuthenticated, timeRange]);
+    const loading = loadingDashboard || loadingMoodSummary || loadingImprovement || loadingMoodHistory || loadingReports;
 
     const handleGenerateReport = async () => {
         try {
@@ -222,7 +183,7 @@ const InsightsPage: React.FC = () => {
             } else {
                 success('Weekly report generated successfully!');
             }
-            await fetchReports();
+            await queryClient.invalidateQueries({ queryKey: ['weeklyReports'] });
         } catch (err: any) {
             console.error('Failed to generate report:', err);
             error(`Report Generation Failed\n\n${err.message || 'An error occurred'}`, 6000);
@@ -271,13 +232,14 @@ const InsightsPage: React.FC = () => {
         if (!reportToDelete) return;
         try {
             await deleteWeeklyReport(reportToDelete);
-            setReports(reports.filter(r => r.report_id !== reportToDelete));
+            await queryClient.invalidateQueries({ queryKey: ['weeklyReports'] });
             success('Report deleted successfully');
         } catch (err) {
             console.error('Failed to delete report:', err);
             error('Failed to delete report');
         } finally {
             setReportToDelete(null);
+            setDeleteConfirmOpen(false);
         }
     };
 
@@ -541,7 +503,7 @@ const InsightsPage: React.FC = () => {
                             Weekly Reports
                         </h2>
                         <button
-                            onClick={fetchReports}
+                            onClick={() => queryClient.invalidateQueries({ queryKey: ['weeklyReports'] })}
                             className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                         >
                             <RefreshCw size={16} className="text-gray-600" />
