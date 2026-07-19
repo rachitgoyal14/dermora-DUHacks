@@ -1,15 +1,13 @@
-// MoodPage.tsx - Updated with Clerk Authentication
-// Fetches questions from backend, logs mood with authenticated user
+// MoodPage.tsx - Manual JWT Authentication (no Clerk)
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import { SadFace, NeutralFace, GoodFace, HappyFace } from './MoodFaces';
 import BottomNav from './BottomNav';
 import { logMood, getMoodQuestions } from '../services/api';
 import { Check, RefreshCw } from 'lucide-react';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 // Components
 const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
     <motion.button
@@ -43,12 +41,7 @@ const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
 
 const MoodPage: React.FC = () => {
     const navigate = useNavigate();
-    
-    // Clerk auth hooks
-    const { getToken, isSignedIn } = useAuth();
-    const { user } = useUser();
-    const [backendUserId, setBackendUserId] = useState<string | null>(null);
-    const syncedRef = useRef(false);
+    const { isAuthenticated } = useAuth();
 
     const [questions, setQuestions] = useState<any[]>([]);
     const [currentStep, setCurrentStep] = useState<number>(0);
@@ -66,48 +59,15 @@ const MoodPage: React.FC = () => {
         energy: ['Exhausted', 'Low', 'Good', 'Energized'],
     };
 
-    // Sync user and get backend UUID
-    useEffect(() => {
-        if (!isSignedIn || !user || syncedRef.current) return;
-
-        const syncUser = async () => {
-            try {
-                const token = await getToken();
-                const response = await fetch(`${BACKEND_URL}/auth/sync-user`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                
-                const data = await response.json();
-                console.log("✅ Backend sync success:", data);
-                
-                if (data.uuid) {
-                    setBackendUserId(data.uuid);
-                    console.log("📝 Stored backend UUID:", data.uuid);
-                }
-                
-                syncedRef.current = true;
-            } catch (err) {
-                console.error("User sync failed:", err);
-            }
-        };
-
-        syncUser();
-    }, [isSignedIn, user, getToken]);
-
-    // Fetch questions from backend
+    // Fetch questions from backend (public endpoint)
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                // Questions endpoint is public - no auth needed
                 const response = await getMoodQuestions();
                 setQuestions(response.questions);
                 setCurrentStep(0);
             } catch (error) {
                 console.error('Failed to fetch mood questions:', error);
-                // Fallback to static questions if needed
                 setQuestions([
                     { id: 'mood', prompt: 'How are you feeling right now?' },
                     { id: 'stress', prompt: 'How stressed do you feel?' },
@@ -123,14 +83,8 @@ const MoodPage: React.FC = () => {
     // Submit mood log when all questions answered
     useEffect(() => {
         if (currentStep === questions.length && questions.length > 0 && !isLoggingMood) {
-            if (!backendUserId) {
-                console.error("Cannot log mood: No backend user ID available");
-                return;
-            }
-
             const submitMoodLog = async () => {
                 setIsLoggingMood(true);
-                
                 try {
                     const moodScore = selectedAnswers['mood'];
                     const data = {
@@ -138,27 +92,21 @@ const MoodPage: React.FC = () => {
                         stress: selectedAnswers['stress'],
                         anxiety: selectedAnswers['anxiety'],
                         energy: selectedAnswers['energy'],
-                        sadness: 100 - moodScore, // Derived from mood_score
+                        sadness: 100 - moodScore,
                         logged_at: new Date().toISOString(),
                     };
-
-                    const token = await getToken();
-                    await logMood(data, token, backendUserId);
-                    
-                    console.log("✅ Mood logged successfully");
-                    setTimeout(() => navigate('/solace'), 1500);
+                    await logMood(data);
+                    setTimeout(() => navigate('/mind'), 1500);
                 } catch (error) {
                     console.error('Failed to log mood:', error);
-                    // Still navigate to solace even if logging fails
-                    setTimeout(() => navigate('/solace'), 1500);
+                    setTimeout(() => navigate('/mind'), 1500);
                 } finally {
                     setIsLoggingMood(false);
                 }
             };
-
             submitMoodLog();
         }
-    }, [currentStep, questions, selectedAnswers, backendUserId, getToken, navigate, isLoggingMood]);
+    }, [currentStep, questions, selectedAnswers, navigate, isLoggingMood]);
 
     const handleSelect = (index: number) => {
         setSelectedIndex(index);
@@ -187,8 +135,8 @@ const MoodPage: React.FC = () => {
         return 'Heading to Solace...';
     };
 
-    // Show loading while syncing
-    if (!backendUserId) {
+    // Show loading while authenticating
+    if (!isAuthenticated) {
         return (
             <div className="min-h-screen w-full bg-[#FFF5F5] flex items-center justify-center">
                 <div className="text-center">

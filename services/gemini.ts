@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { LiveServerMessage, Modality } from "@google/genai";
 
-// Initialize Gemini
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const LIVE_MODEL = import.meta.env.VITE_GEMINI_LIVE_MODEL || 'gemini-2.5-flash-native-audio-latest';
 
 // Optional: Add fallback / warning in development
 if (!API_KEY) {
@@ -19,7 +19,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 // Existing text streaming function
 export const getGeminiStream = async function* (userText: string, systemPrompt: string) {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-native-audio-preview-09-2025" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const result = await model.generateContentStream({
             contents: [
@@ -219,6 +219,9 @@ export const connectToSolaceLive = async (
         const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
 
+        console.log('Input ctx actual sample rate:', inputCtx.sampleRate);
+        console.log('Output ctx actual sample rate:', outputCtx.sampleRate);
+
         if (outputCtx.state === 'suspended') {
             await outputCtx.resume();
         }
@@ -250,7 +253,7 @@ export const connectToSolaceLive = async (
         let setupComplete = false;
 
         const sessionPromise = ai.live.connect({
-            model: 'gemini-2.5-flash-native-audio-preview-09-2025',  // ← Recommended stable model (Jan 2026)
+            model: LIVE_MODEL,
 
             config: {
                 responseModalities: [Modality.AUDIO],

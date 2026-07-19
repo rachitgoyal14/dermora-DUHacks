@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useUser, useAuth } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
     Flame, 
@@ -15,53 +15,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import BottomNav from './BottomNav';
-import { useBackendAuth } from '../contexts/AuthContext';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-// Define proper types based on backend response
-interface StreakData {
-    current_streak: number;
-    longest_streak: number;
-    last_check_in: string | null;
-    total_check_ins: number;
-}
-
-interface RecentActivity {
-    images_this_week: number;
-    moods_this_week: number;
-    days_active: number;
-}
-
-interface QuickStats {
-    total_images: number;
-    total_mood_logs: number;
-    avg_mood_this_week: number;
-    days_tracked: number;
-    images_this_week: number;
-    days_active_this_month: number;
-    mood_avg_this_week: number;
-}
-
-interface DashboardData {
-    streak: StreakData;
-    recent_activity: RecentActivity;
-    quick_stats: QuickStats;
-    daily_insight: string | null;
-}
-
-interface DailyInsight {
-    insight_text: string;
-    insight_type: string;
-    icon: string;
-    generated_at: string;
-}
-
-interface CheckInResponse {
-    current_streak: number;
-    longest_streak: number;
-    last_check_in: string;
-    streak_maintained: boolean;
-    message: string;
-}
+import { getDashboard, getDailyInsight, dailyCheckIn, DashboardData, DailyInsight } from '../services/api';
 
 // Skeleton Pulse Component
 const SkeletonPulse: React.FC<{ className?: string }> = ({ className = '' }) => (
@@ -178,11 +132,8 @@ const DashboardSkeleton: React.FC = () => {
 };
 
 const Home: React.FC = () => {
-    const { user } = useUser();
-    const { getToken } = useAuth();
+    const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    
-    const { backendUserId, isLoading: authLoading } = useBackendAuth();
     
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null);
@@ -192,92 +143,34 @@ const Home: React.FC = () => {
     // Fetch dashboard data
     useEffect(() => {
         const fetchDashboard = async () => {
-            if (!backendUserId) return;
-
+            if (!isAuthenticated) return;
             try {
                 setLoading(true);
-                const token = await getToken();
-                
-                // Fetch dashboard data
-                const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'X-User-Id': backendUserId,
-                },
-                });
-
-                
-                if (!dashboardResponse.ok) {
-                    throw new Error('Failed to fetch dashboard');
-                }
-                
-                const dashboard = await dashboardResponse.json();
-                
-                // Fetch daily insight
-                const insightResponse = await fetch(`${BACKEND_URL}/engagement/insights/daily`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'X-User-Id': backendUserId,
-                },
-                });
-
-                
-                let insight = null;
-                if (insightResponse.ok) {
-                    insight = await insightResponse.json();
-                }
-                
+                const [dashboard, insight] = await Promise.all([
+                    getDashboard(),
+                    getDailyInsight().catch(() => null),
+                ]);
                 setDashboardData(dashboard);
                 setDailyInsight(insight);
-                
             } catch (err) {
-                console.error("Failed to fetch dashboard:", err);
+                console.error('Failed to fetch dashboard:', err);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchDashboard();
-    }, [backendUserId, getToken]);
+    }, [isAuthenticated]);
 
     // Handle check-in
     const handleCheckIn = async () => {
-        if (!backendUserId || checkingIn) return;
-
+        if (checkingIn) return;
         try {
             setCheckingIn(true);
-            const token = await getToken();
-            
-            const response = await fetch(`${BACKEND_URL}/engagement/check-in`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'X-User-Id': backendUserId,
-                },
-            });
-
-            
-            if (!response.ok) {
-                throw new Error('Check-in failed');
-            }
-            
-            const result: CheckInResponse = await response.json();
-            
-            // Refresh dashboard to get updated streak
-          const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'X-User-Id': backendUserId,
-                },
-            });
-
-            if (dashboardResponse.ok) {
-                const dashboard = await dashboardResponse.json();
-                setDashboardData(dashboard);
-            }
-            
+            await dailyCheckIn();
+            const dashboard = await getDashboard();
+            setDashboardData(dashboard);
         } catch (err) {
-            console.error("Check-in failed:", err);
+            console.error('Check-in failed:', err);
         } finally {
             setCheckingIn(false);
         }
@@ -286,15 +179,13 @@ const Home: React.FC = () => {
     // Check if user can check in today
     const canCheckInToday = () => {
         if (!dashboardData?.streak?.last_check_in) return true;
-        
         const lastCheckIn = new Date(dashboardData.streak.last_check_in);
         const today = new Date();
-        
         return lastCheckIn.toDateString() !== today.toDateString();
     };
 
     // Show skeleton loading state instead of spinner
-    if (authLoading || loading) {
+    if (loading) {
         return <DashboardSkeleton />;
     }
 
@@ -317,15 +208,11 @@ const Home: React.FC = () => {
                             Welcome Back
                         </span>
                         <span className="font-display font-bold text-xl text-[#1A1A1A]">
-                            {user?.firstName || user?.fullName || "User"}
+                            Dermora User
                         </span>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center overflow-hidden">
-                        {user?.imageUrl ? (
-                            <img src={user.imageUrl || "/placeholder.svg"} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-pastel-pink to-pastel-lavender" />
-                        )}
+                        <div className="w-full h-full bg-gradient-to-br from-pastel-pink to-pastel-lavender" />
                     </div>
                 </div>
             </motion.nav>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import Webcam from 'react-webcam';
 import { Capacitor } from '@capacitor/core';
 import {
@@ -18,15 +18,14 @@ import {
     TrendingUp, TrendingDown, Minus, ChevronDown, Sparkles 
 } from 'lucide-react';
 import BottomNav from './BottomNav';
-import { useBackendAuth } from '../contexts/AuthContext';
 import { 
     uploadSkinImage, getImprovementTracker, getSkinHistory, 
     analyzeExisting, compareImages, deleteImage, refreshImprovement, getMySkinImages 
 } from '../services/api';
 
-const isNative = Capacitor.isNativePlatform();
-// const BACKEND_URL = "http://localhost:8000";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const isNative = Capacitor.isNativePlatform();
+
 
 // Skeleton Pulse Component
 const SkeletonPulse: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className = '', style }) => (
@@ -134,18 +133,60 @@ interface SkinImage {
     image_type: string;
 }
 
+const resizeImage = (file: File, maxDimension = 1024): Promise<File> => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxDimension) {
+                        height = Math.round((height * maxDimension) / width);
+                        width = maxDimension;
+                    }
+                } else {
+                    if (height > maxDimension) {
+                        width = Math.round((width * maxDimension) / height);
+                        height = maxDimension;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const resizedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(resizedFile);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', 0.85); // 85% quality
+                } else {
+                    resolve(file);
+                }
+            };
+            img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
 type ActionMode = 'none' | 'reanalyze' | 'compare' | 'delete';
 
 const DetectPage: React.FC = () => {
-    // const { backendUserId, isLoading: authLoading } = useBackendAuth();
-    // const { getToken } = useAuth();
-
-    const { getToken, isSignedIn } = useAuth();
-    const { user } = useUser();
-    const [backendUserId, setBackendUserId] = useState<string | null>(null);
-    const syncedRef = useRef(false);
-
-    const isAuthReady = Boolean(backendUserId);
+    const { isAuthenticated } = useAuth();
+    const isAuthReady = isAuthenticated;
     const webcamRef = useRef<Webcam>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
@@ -194,16 +235,15 @@ const DetectPage: React.FC = () => {
         setLoadingImages(true);
         setImagesError(null);
         try {
-            const token = await getToken();
-            const images = await getMySkinImages(token, backendUserId);
+            const images = await getMySkinImages();
             setUserImages(images);
         } catch (err) {
-            console.error("Failed to fetch user images", err);
-            setImagesError("Failed to load images");
+            console.error('Failed to fetch user images', err);
+            setImagesError('Failed to load images');
         } finally {
             setLoadingImages(false);
         }
-    }, [backendUserId, getToken]);
+    }, [isAuthReady]);
 
     // Fetch history on mount
     useEffect(() => {
@@ -211,19 +251,18 @@ const DetectPage: React.FC = () => {
             if (!isAuthReady) return;
 
             try {
-                const token = await getToken();
-                const data = await getImprovementTracker(token, backendUserId);
+                const data = await getImprovementTracker();
                 setHistory(data);
             } catch (err) {
-                console.error("Failed to fetch history", err);
+                console.error('Failed to fetch history', err);
             }
         };
 
-        if (backendUserId) {
+        if (isAuthReady) {
             fetchHistory();
             fetchUserImages();
         }
-    }, [isAuthReady, backendUserId, getToken, fetchUserImages]);
+    }, [isAuthReady, fetchUserImages]);
 
     // const capture = useCallback(() => {
     //     if (!isAuthReady) return;  // ← ADD THIS LINE
@@ -305,32 +344,29 @@ const DetectPage: React.FC = () => {
     //     }
 
     const handleAnalysis = async (file: File) => {
-    if (!isAuthReady) {
-        setError("Setting up your account… try again in 1–2 seconds.");
-        return;
-    }
+        if (!isAuthReady) {
+            setError('Setting up your account… try again in 1–2 seconds.');
+            return;
+        }
 
         setIsAnalyzing(true);
         setError(null);
         setResult(null);
 
         try {
-            const token = await getToken();
-            const backendResult = await uploadSkinImage(file, 'progress', token, backendUserId);
+            const compressedFile = await resizeImage(file, 1024);
+            const backendResult = await uploadSkinImage(compressedFile, 'progress');
             setResult(backendResult);
-            
-            // Show confetti for high confidence
             if (backendResult.confidence > 0.8) {
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 3000);
             }
-            
-            showToast("Image uploaded and analyzed successfully!", "success");
+            showToast('Image uploaded and analyzed successfully!', 'success');
             fetchUserImages();
         } catch (err) {
             console.error(err);
-            setError("Failed to analyze image. Please try again.");
-            showToast("Failed to analyze image", "error");
+            setError('Failed to analyze image. Please try again.');
+            showToast('Failed to analyze image', 'error');
         } finally {
             setIsAnalyzing(false);
         }
@@ -383,80 +419,51 @@ const DetectPage: React.FC = () => {
 
     const handleConfirmAction = async () => {
         const currentMode = actionMode;
-        
-
-        if (!backendUserId) return;
 
         setActionError(null);
         setActionResult(null);
         setIsProcessing(true);
 
         try {
-            const token = await getToken();
-
             if (actionMode === 'reanalyze' && selectedImageIds.length === 1) {
-                const res = await analyzeExisting(selectedImageIds[0], token, backendUserId);
-                setActionResult({
-                    ...res,
-                    _type: 'reanalyze',
-                });
-                showToast("Image re-analyzed successfully!", "success");
+                const res = await analyzeExisting(selectedImageIds[0]);
+                setActionResult({ ...res, _type: 'reanalyze' });
+                showToast('Image re-analyzed successfully!', 'success');
             } else if (actionMode === 'compare' && selectedImageIds.length === 2) {
                 const sortedIds = [...selectedImageIds].sort((a, b) => {
                     const imgA = userImages.find(img => img.image_id === a);
                     const imgB = userImages.find(img => img.image_id === b);
                     if (!imgA || !imgB) return 0;
-                    return (
-                        new Date(imgA.captured_at).getTime() -
-                        new Date(imgB.captured_at).getTime()
-                    );
+                    return new Date(imgA.captured_at).getTime() - new Date(imgB.captured_at).getTime();
                 });
-            
-                const res = await compareImages(
-                    sortedIds[0],
-                    sortedIds[1],
-                    token,
-                    backendUserId
-                );
-            
-                setActionResult({
-                    ...res,
-                    _type: 'compare',
-                });
-            
-                showToast("Images compared successfully!", "success");
-            }
-            else if (actionMode === 'delete' && selectedImageIds.length === 1) {
-                const res = await deleteImage(selectedImageIds[0], token, backendUserId);
-                setActionResult({
-                    ...res,
-                    _type: 'delete',
-                });
-                showToast("Image deleted successfully!", "success");
+                const res = await compareImages(sortedIds[0], sortedIds[1]);
+                setActionResult({ ...res, _type: 'compare' });
+                showToast('Images compared successfully!', 'success');
+            } else if (actionMode === 'delete' && selectedImageIds.length === 1) {
+                const res = await deleteImage(selectedImageIds[0]);
+                setActionResult({ ...res, _type: 'delete' });
+                showToast('Image deleted successfully!', 'success');
                 fetchUserImages();
             }
             closeModal();
         } catch (err) {
             console.error(err);
             setActionError(`Failed to ${actionMode} image(s).`);
-            showToast(`Failed to ${actionMode} image(s)`, "error");
+            showToast(`Failed to ${actionMode} image(s)`, 'error');
         } finally {
             setIsProcessing(false);
         }
     };
 
     const handleRefresh = async () => {
-        if (!backendUserId) return;
-
         try {
-            const token = await getToken();
-            const res = await refreshImprovement(token, backendUserId);
-            showToast("Improvement data refreshed!", "success");
-            const data = await getImprovementTracker(token, backendUserId);
+            await refreshImprovement();
+            showToast('Improvement data refreshed!', 'success');
+            const data = await getImprovementTracker();
             setHistory(data);
         } catch (err) {
             console.error(err);
-            showToast("Failed to refresh", "error");
+            showToast('Failed to refresh', 'error');
         }
     };
 
@@ -488,35 +495,11 @@ const DetectPage: React.FC = () => {
     };
     
 
-    /* ================= SYNC USER ================= */
-useEffect(() => {
-  if (!isSignedIn || !user || syncedRef.current) return;
-
-  const syncUser = async () => {
-    try {
-      const token = await getToken();
-      const res = await fetch(`${BACKEND_URL}/auth/sync-user`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        });
-
-      const data = await res.json();
-      if (data.uuid) {
-        setBackendUserId(data.uuid);
-        syncedRef.current = true;
-      }
-    } catch (e) {
-      console.error("User sync failed", e);
-    }
-  };
-
-  syncUser();
-}, [isSignedIn, user, getToken]);
+    /* ================= LOADING GUARD ================= */
+    // (sync-user removed — JWT contains user ID)
 
     // Show skeleton while loading
-    if (!backendUserId) {
+    if (!isAuthenticated) {
         return <DetectPageSkeleton />;
     }
 

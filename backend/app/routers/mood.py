@@ -3,12 +3,13 @@
 # Removed TEMP_USER_ID - derives from token via X-User-Id header
 # Matches skin.py and reports.py structure
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
 
 from app.core.database import get_db
+from app.core.dependencies import get_current_user_id
 from app.entities.user import User
 from app.entities.mood_log import MoodLog
 from app.schemas.mood import MoodLogCreate
@@ -17,29 +18,18 @@ router = APIRouter(prefix="/mood", tags=["Mood"])
 
 
 # ============================================================================
-# 🔐 UUID USER DEPENDENCY (MATCHING skin.py)
+# 🔐 JWT USER DEPENDENCY
 # ============================================================================
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id"),
+    user_id: UUID = Depends(get_current_user_id),
 ) -> User:
-    """
-    Extract UUID from header and fetch user.
-    """
-    try:
-        user_uuid = UUID(x_user_id)
-    except ValueError:
-        raise HTTPException(400, "Invalid user UUID")
-
-    result = await db.execute(
-        select(User).where(User.id == user_uuid)
-    )
+    """Resolve JWT user_id to a full User ORM object."""
+    result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-
     if not user:
         raise HTTPException(401, "User does not exist")
-
     return user
 
 

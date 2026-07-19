@@ -10,10 +10,11 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    # 🔑 REQUIRED FOR CLERK
+    # Legacy Clerk field — kept nullable, no longer required
     clerk_user_id = Column(Text, unique=True, index=True, nullable=True)
 
     email = Column(Text, unique=True, nullable=True)
+    hashed_password = Column(Text, nullable=True)   # manual auth
     full_name = Column(Text, nullable=True)
     phone_number = Column(Text, unique=True, nullable=True)
 

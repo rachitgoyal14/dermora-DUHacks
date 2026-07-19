@@ -38,3 +38,4 @@ openai
 pytest
 pytest-asyncio 
 httpx
+boto3

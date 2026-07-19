@@ -1,43 +1,39 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import { getCurrentToken } from './auth';
 
-// Base config - NOW USES ENVIRONMENT VARIABLE
+// Base config
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Factory to create auth-aware axios instance with X-User-Id header
-// Usage in component: const api = createApi(await getToken(), userId);
+// Single axios instance — attaches Bearer token automatically via interceptor
 // ──────────────────────────────────────────────────────────────────────────────
-export const createApi = (token?: string, userId?: string): AxiosInstance => {
-    const instance = axios.create({
-        baseURL: BASE_URL,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-            ...(userId && { 'X-User-Id': userId }),
-        },
-    });
+export const api: AxiosInstance = axios.create({ baseURL: BASE_URL });
 
-    // Optional: Add response interceptor for common error handling
-    instance.interceptors.response.use(
-        (response) => response,
-        (error) => {
-            console.error('API Error:', {
-                url: error.config?.url,
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message,
-            });
-            return Promise.reject(error);
+api.interceptors.request.use((config) => {
+    const token = getCurrentToken();
+    if (token && config.headers) {
+        if (typeof config.headers.set === 'function') {
+            config.headers.set('Authorization', `Bearer ${token}`);
+        } else {
+            (config.headers as any)['Authorization'] = `Bearer ${token}`;
         }
-    );
+    }
+    return config;
+});
 
-    return instance;
-};
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Default public instance (no token) - use only for truly public endpoints
-// ──────────────────────────────────────────────────────────────────────────────
-export const api = createApi(); // No auth by default
+// Response interceptor: common error logging
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        console.error('API Error:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+        });
+        return Promise.reject(error);
+    }
+);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -108,33 +104,36 @@ export interface MoodAnalysisResponse {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Engagement Types (NEW)
+// Engagement Types
 // ──────────────────────────────────────────────────────────────────────────────
 
 export interface StreakData {
     current_streak: number;
     longest_streak: number;
     last_check_in: string | null;
-    can_check_in_today: boolean;
+    total_check_ins: number;
 }
 
 export interface DashboardData {
     streak: StreakData;
-    quick_stats: {
+    recent_activity: {
         images_this_week: number;
-        mood_avg_this_week: number | null;
-        days_active_this_month: number;
+        moods_this_week: number;
+        days_active: number;
     };
-    recent_activity: Array<{
-        type: 'skin' | 'mood' | 'voice';
-        description: string;
-        timestamp: string;
-    }>;
+    quick_stats: {
+        total_images: number;
+        total_mood_logs: number;
+        avg_mood_this_week: number;
+        days_tracked: number;
+    };
+    daily_insight: string | null;
 }
 
 export interface DailyInsight {
-    message: string;
+    insight_text: string;
     insight_type: string;
+    icon: string;
     generated_at: string;
 }
 
@@ -163,286 +162,181 @@ export interface UserPreferences {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Skin API (requires X-User-Id header)
+// Skin API
 // ──────────────────────────────────────────────────────────────────────────────
 
-export const getMySkinImages = async (token?: string, userId?: string): Promise<UserSkinImage[]> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/skin/my-images');
+export const getMySkinImages = async (): Promise<UserSkinImage[]> => {
+    const response = await api.get('/skin/my-images');
     return response.data;
 };
 
 export const uploadSkinImage = async (
     file: File,
-    imageType: string = "weekly",
-    token?: string,
-    userId?: string
+    imageType: string = 'weekly',
 ): Promise<SkinImageUploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post('/skin/upload', formData, {
+    const response = await api.post('/skin/upload', formData, {
         params: { image_type: imageType },
         headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
 };
 
-export const analyzeExisting = async (
-    imageId: string,
-    token?: string,
-    userId?: string
-) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post(`/skin/analyze/${imageId}`);
+export const analyzeExisting = async (imageId: string) => {
+    const response = await api.post(`/skin/analyze/${imageId}`);
     return response.data;
 };
 
-export const compareImages = async (
-    beforeImageId: string,
-    afterImageId: string,
-    token?: string,
-    userId?: string
-) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post('/skin/compare', {
+export const compareImages = async (beforeImageId: string, afterImageId: string) => {
+    const response = await api.post('/skin/compare', {
         before_image_id: beforeImageId,
         after_image_id: afterImageId,
     });
     return response.data;
 };
 
-export const getSkinHistory = async (token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/skin/progress/comparison');
+export const getSkinHistory = async () => {
+    const response = await api.get('/skin/progress/comparison');
     return response.data;
 };
 
-export const deleteImage = async (imageId: string, token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.delete(`/skin/image/${imageId}`);
+export const deleteImage = async (imageId: string) => {
+    const response = await api.delete(`/skin/image/${imageId}`);
     return response.data;
 };
 
-export const getImprovementTracker = async (token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/skin/improvement-tracker');
+export const getImprovementTracker = async () => {
+    const response = await api.get('/skin/improvement-tracker');
     return response.data;
 };
 
-export const refreshImprovement = async (token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post('/skin/improvement-tracker/refresh');
+export const refreshImprovement = async () => {
+    const response = await api.post('/skin/improvement-tracker/refresh');
     return response.data;
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Mood API (requires X-User-Id header for authenticated endpoints)
+// Mood API
 // ──────────────────────────────────────────────────────────────────────────────
 
-export const logMood = async (data: MoodLogData, token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post('/mood/log', data);
+export const logMood = async (data: MoodLogData) => {
+    const response = await api.post('/mood/log', data);
     return response.data;
 };
 
 export const getMoodQuestions = async () => {
-    // Public endpoint - no auth required
-    const apiInstance = createApi();
-    const response = await apiInstance.get('/mood/questions');
+    // Public endpoint — no auth required; goes straight to the shared instance
+    const response = await api.get('/mood/questions');
     return response.data;
 };
 
-export const getMoodHistory = async (limit: number = 30, token?: string, userId?: string): Promise<MoodHistoryResponse> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/mood/history', {
-        params: { limit },
-    });
+export const getMoodHistory = async (limit: number = 30): Promise<MoodHistoryResponse> => {
+    const response = await api.get('/mood/history', { params: { limit } });
     return response.data;
 };
 
-export const deleteMoodLog = async (moodLogId: string, token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.delete(`/mood/log/${moodLogId}`);
+export const deleteMoodLog = async (moodLogId: string) => {
+    const response = await api.delete(`/mood/log/${moodLogId}`);
     return response.data;
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Voice / Solace API (requires X-User-Id header)
+// Voice / Solace API
 // ──────────────────────────────────────────────────────────────────────────────
 
-export const getVoicePrompt = async (token?: string, userId?: string): Promise<VoicePromptData> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/voice/prompt');
+export const getVoicePrompt = async (): Promise<VoicePromptData> => {
+    const response = await api.get('/voice/prompt');
     return response.data;
 };
 
 export const uploadVoiceForMoodAnalysis = async (
     audioBlob: Blob,
-    token?: string,
-    userId?: string
 ): Promise<MoodAnalysisResponse> => {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'conversation.webm');
-
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post('/voice/mood/analyze', formData, {
+    const response = await api.post('/voice/mood/analyze', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Reports API (requires X-User-Id header)
+// Reports API
 // ──────────────────────────────────────────────────────────────────────────────
 
-export const getWeeklyReport = async (token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/reports/weekly');
+export const getWeeklyReport = async () => {
+    const response = await api.get('/reports/weekly');
     return response.data;
 };
 
-// Updated generateWeeklyReport function for api.ts
-// Handles both successful reports and empty week reports (200 status)
-
-export const generateWeeklyReport = async (
-    forceRegenerate: boolean = true, 
-    token?: string, 
-    userId?: string
-) => {
-    const apiInstance = createApi(token, userId);
-    
-    console.group("🔍 generateWeeklyReport DEBUG — " + new Date().toISOString());
-    console.log("Backend URL:            ", BASE_URL);
-    console.log("Full endpoint:          ", `${BASE_URL}/reports/weekly`);
-    console.log("Force regenerate:       ", forceRegenerate);
-    console.log("Token present:          ", !!token);
-    console.log("User-ID present:        ", !!userId);
-    console.log("Headers:", {
-        'Authorization': token ? `Bearer ${token.substring(0, 20)}...` : 'MISSING',
-        'X-User-Id': userId || 'MISSING'
+export const generateWeeklyReport = async (forceRegenerate: boolean = true) => {
+    const response = await api.get('/reports/weekly', {
+        params: { force_regenerate: forceRegenerate },
     });
-    console.groupEnd();
-    
-    try {
-        const response = await apiInstance.get('/reports/weekly', {
-            params: { force_regenerate: forceRegenerate }
-        });
-        
-        console.log("✅ Report generated successfully:", response.data);
-        
-        // Check if it's an empty week report
-        const isEmptyWeek = response.data.skin_trend === 'insufficient_data' || 
-                           response.data.metrics?.total_images_uploaded === 0;
-        
-        if (isEmptyWeek) {
-            console.log("ℹ️ Empty week report - no data for this period");
-        }
-        
-        return response.data;
-        
-    } catch (error: any) {
-        console.error("❌ generateWeeklyReport failed:");
-        console.error("Status:", error.response?.status);
-        console.error("Status Text:", error.response?.statusText);
-        console.error("Error Data:", error.response?.data);
-        console.error("Full Error:", error);
-        
-        // Provide more user-friendly error messages
-        let errorMessage = 'Failed to generate report';
-        
-        if (error.response?.status === 503) {
-            errorMessage = 'Report generation service is temporarily unavailable. Please try again later.';
-        } else if (error.response?.status === 401) {
-            errorMessage = 'Authentication failed. Please log in again.';
-        } else if (error.response?.status === 500) {
-            errorMessage = 'Server error occurred while generating the report. Please try again.';
-        } else if (error.response?.data?.detail) {
-            errorMessage = error.response.data.detail;
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-        
-        throw new Error(errorMessage);
-    }
+    return response.data;
 };
 
-export const getWeeklyReportHtml = async (weekStart?: string, token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/reports/weekly/html', {
+export const getWeeklyReportHtml = async (weekStart?: string) => {
+    const response = await api.get('/reports/weekly/html', {
         params: weekStart ? { week_start: weekStart } : {},
         responseType: 'text',
     });
     return response.data;
 };
 
-export const getWeeklyReportsList = async (limit: number = 10, token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/reports/weekly/list', {
-        params: { limit },
-    });
+export const getWeeklyReportsList = async (limit: number = 10) => {
+    const response = await api.get('/reports/weekly/list', { params: { limit } });
     return response.data;
 };
 
-export const deleteWeeklyReport = async (reportId: string, token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.delete(`/reports/weekly/${reportId}`);
+export const deleteWeeklyReport = async (reportId: string) => {
+    const response = await api.delete(`/reports/weekly/${reportId}`);
     return response.data;
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Engagement API (NEW - requires X-User-Id header)
+// Engagement API
 // ──────────────────────────────────────────────────────────────────────────────
 
-export const getStreak = async (token?: string, userId?: string): Promise<StreakData> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/engagement/streak');
+export const getStreak = async (): Promise<StreakData> => {
+    const response = await api.get('/engagement/streak');
     return response.data;
 };
 
-export const dailyCheckIn = async (token?: string, userId?: string) => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.post('/engagement/check-in');
+export const dailyCheckIn = async () => {
+    const response = await api.post('/engagement/check-in');
     return response.data;
 };
 
-export const getDashboard = async (token?: string, userId?: string): Promise<DashboardData> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/engagement/dashboard');
+export const getDashboard = async (): Promise<DashboardData> => {
+    const response = await api.get('/engagement/dashboard');
     return response.data;
 };
 
-export const getDailyInsight = async (token?: string, userId?: string): Promise<DailyInsight> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/engagement/insights/daily');
+export const getDailyInsight = async (): Promise<DailyInsight> => {
+    const response = await api.get('/engagement/insights/daily');
     return response.data;
 };
 
-export const getMoodHistoryChart = async (days: number = 7, token?: string, userId?: string): Promise<MoodChartData[]> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/engagement/mood/history', {
-        params: { days },
-    });
+export const getMoodHistoryChart = async (days: number = 7): Promise<MoodChartData[]> => {
+    const response = await api.get('/engagement/mood/history', { params: { days } });
     return response.data;
 };
 
-export const getMoodSummary = async (token?: string, userId?: string): Promise<MoodSummary> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/engagement/mood/summary');
+export const getMoodSummary = async (): Promise<MoodSummary> => {
+    const response = await api.get('/engagement/mood/summary');
     return response.data;
 };
 
-export const getPreferences = async (token?: string, userId?: string): Promise<UserPreferences> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.get('/engagement/preferences');
+export const getPreferences = async (): Promise<UserPreferences> => {
+    const response = await api.get('/engagement/preferences');
     return response.data;
 };
 
-export const updatePreferences = async (prefs: Partial<UserPreferences>, token?: string, userId?: string): Promise<UserPreferences> => {
-    const apiInstance = createApi(token, userId);
-    const response = await apiInstance.put('/engagement/preferences', prefs);
+export const updatePreferences = async (prefs: Partial<UserPreferences>): Promise<UserPreferences> => {
+    const response = await api.put('/engagement/preferences', prefs);
     return response.data;
 };
 
-export default api; // Export default public instance (no auth)
+export default api;

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Header
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, delete
 from datetime import datetime, timedelta
@@ -9,6 +9,7 @@ import io, os
 import uuid as uuid_lib
 
 from app.core.database import get_db
+from app.core.dependencies import get_current_user_id
 from app.entities.skin_image import SkinImage
 from app.entities.skin_diagnosis import SkinDiagnosis
 from app.entities.improvement_record import ImprovementRecord
@@ -39,29 +40,18 @@ class ImageCompareRequest(BaseModel):
     after_image_id: UUID
 
 # ============================================================================
-# 🔐 UUID USER DEPENDENCY (CORE FIX)
+# 🔐 JWT USER DEPENDENCY
 # ============================================================================
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id"),
+    user_id: UUID = Depends(get_current_user_id),
 ) -> User:
-    """
-    Extract UUID from header and fetch user.
-    """
-    try:
-        user_uuid = UUID(x_user_id)
-    except ValueError:
-        raise HTTPException(400, "Invalid user UUID")
-
-    result = await db.execute(
-        select(User).where(User.id == user_uuid)
-    )
+    """Resolve JWT user_id to a full User ORM object."""
+    result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-
     if not user:
         raise HTTPException(401, "User does not exist")
-
     return user
 
 
@@ -107,10 +97,7 @@ async def upload_and_analyze(
         raise HTTPException(400, "Invalid image file")
 
     # Save file
-    # file_path = await storage.save_image(file, str(user.id))
     file_path = await storage.save_image(file, str(user.id))
-    if not file_path.startswith('/'):
-        file_path = '/' + file_path
 
     # ML inference
     await file.seek(0)
@@ -208,21 +195,9 @@ async def analyze_existing_image(
     if not image:
         raise HTTPException(404, "Image not found")
 
-    # Convert URL path to filesystem path
-    # image.image_url is like: /uploads/skin_images/file.jpg
-    # We need: uploads/skin_images/file.jpg (relative to project root)
-    file_path = image.image_url.lstrip('/')  # Remove leading slash
-    
-    # Check if file exists
-    if not os.path.exists(file_path):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Image file not found at path: {file_path}"
-        )
-
     try:
-        # Call Azure Vision with filesystem path
-        analysis = await vision_service.analyze_single_image(file_path)
+        # Call Azure Vision with R2 URL directly
+        analysis = await vision_service.analyze_single_image(image.image_url)
         
         # Update diagnosis in database with new analysis
         diag_result = await db.execute(
@@ -289,12 +264,8 @@ async def get_weekly_comparison(
 
     comparisons = []
     for i in range(len(images) - 1):
-        # Convert URL paths to filesystem paths
-        before_path = images[i].image_url.lstrip('/')
-        after_path = images[i + 1].image_url.lstrip('/')
-        
         try:
-            comp = await vision_service.compare_images(before_path, after_path)
+            comp = await vision_service.compare_images(images[i].image_url, images[i + 1].image_url)
             comparisons.append(comp)
         except Exception as e:
             print(f"Comparison failed: {e}")

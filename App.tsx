@@ -1,90 +1,78 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 
+import { lazy, Suspense } from 'react';
+
 // Pages
-import Home from './components/Home';
-import DetectPage from './components/DetectPage';
-import MindPage from './components/MindPage';
-import InsightsPage from './components/InsightsPage';
-import SignUpPage from './components/SignUpPage';
+const Login = lazy(() => import('./components/Login'));
+const Home = lazy(() => import('./components/Home'));
+const DetectPage = lazy(() => import('./components/DetectPage'));
+const MindPage = lazy(() => import('./components/MindPage'));
+const InsightsPage = lazy(() => import('./components/InsightsPage'));
+const SignUpPage = lazy(() => import('./components/SignUpPage'));
 
-// Clerk Publishable Key
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// ── Protected route wrapper ──────────────────────────────────────────────────
 
-if (!CLERK_PUBLISHABLE_KEY) {
-  throw new Error('Missing Clerk Publishable Key');
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-400" />
+            </div>
+        );
+    }
+
+    return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+};
+
+// ── App ──────────────────────────────────────────────────────────────────────
+
+function AppRoutes() {
+    const { isAuthenticated } = useAuth();
+
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-400" />
+            </div>
+        }>
+            <Routes>
+                {/* Public: Login page (redirects to /home if already authed) */}
+                <Route
+                    path="/"
+                    element={isAuthenticated ? <Navigate to="/home" replace /> : <Login />}
+                />
+
+                {/* Public: Sign-up page — Login.tsx now handles both modes, but keep route for compat */}
+                <Route path="/sign-up" element={<SignUpPage />} />
+
+                {/* Protected routes */}
+                <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/skin" element={<ProtectedRoute><DetectPage /></ProtectedRoute>} />
+                <Route path="/mind" element={<ProtectedRoute><MindPage /></ProtectedRoute>} />
+                <Route path="/insights" element={<ProtectedRoute><InsightsPage /></ProtectedRoute>} />
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </Suspense>
+    );
 }
 
 function App() {
-  return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <AuthProvider>
-        <ToastProvider position="top" maxToasts={3}>
-          <Router>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/sign-up" element={<SignUpPage />} />
-              
-              {/* Protected Routes */}
-              <Route
-                path="/home"
-                element={
-                  <SignedIn>
-                    <Home />
-                  </SignedIn>
-                }
-              />
-              
-              <Route
-                path="/skin"
-                element={
-                  <SignedIn>
-                    <DetectPage />
-                  </SignedIn>
-                }
-              />
-              
-              <Route
-                path="/mind"
-                element={
-                  <SignedIn>
-                    <MindPage />
-                  </SignedIn>
-                }
-              />
-              
-              <Route
-                path="/insights"
-                element={
-                  <SignedIn>
-                    <InsightsPage />
-                  </SignedIn>
-                }
-              />
-              
-              {/* Redirect */}
-              <Route
-                path="/"
-                element={
-                  <>
-                    <SignedIn>
-                      <Navigate to="/home" replace />
-                    </SignedIn>
-                    <SignedOut>
-                      <RedirectToSignIn />
-                    </SignedOut>
-                  </>
-                }
-              />
-            </Routes>
-          </Router>
-        </ToastProvider>
-      </AuthProvider>
-    </ClerkProvider>
-  );
+    return (
+        <AuthProvider>
+            <ToastProvider position="top" maxToasts={3}>
+                <Router>
+                    <AppRoutes />
+                </Router>
+            </ToastProvider>
+        </AuthProvider>
+    );
 }
 
 export default App;

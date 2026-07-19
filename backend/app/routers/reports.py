@@ -1,6 +1,6 @@
 # reports.py - FIXED to handle weeks with no data gracefully
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
@@ -9,6 +9,7 @@ from uuid import UUID
 from typing import Optional
 
 from app.core.database import get_db
+from app.core.dependencies import get_current_user_id
 from app.entities.user import User
 from app.entities.weekly_report import WeeklyReport
 from app.schemas.reports import WeeklyMetrics
@@ -25,25 +26,13 @@ report_generator = ReportGenerator()
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id"),
+    user_id: UUID = Depends(get_current_user_id),
 ) -> User:
-    """Authenticate user from header."""
-    try:
-        user_uuid = UUID(x_user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user UUID format")
-
-    try:
-        result = await db.execute(
-            select(User).where(User.id == user_uuid)
-        )
-        user = result.scalar_one_or_none()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
+    """Resolve JWT user_id to a full User ORM object."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User does not exist")
-
     return user
 
 

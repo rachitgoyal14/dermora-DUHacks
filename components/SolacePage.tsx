@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import BottomNav from './BottomNav';
 import {
   getVoicePrompt,
@@ -9,7 +9,7 @@ import {
 } from '../services/api';
 import { connectToSolaceLive } from '../services/gemini';
 import { RefreshCw } from 'lucide-react';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 /* ======================================================
    ANDROID-SAFE GLOBAL AUDIO STATE
 ====================================================== */
@@ -24,57 +24,28 @@ type SessionStatus =
   | 'processing';
 
 const SolacePage: React.FC = () => {
-  const { getToken, isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { isAuthenticated, userId } = useAuth();
 
-  const [backendUserId, setBackendUserId] = useState<string | null>(null);
   const [promptData, setPromptData] = useState<VoicePromptData | null>(null);
   const [status, setStatus] = useState<SessionStatus>('idle');
   const [transcript, setTranscript] = useState('');
   const [debugMsg, setDebugMsg] = useState('Initializing...');
   const [error, setError] = useState<string | null>(null);
 
-  const syncedRef = useRef(false);
   const sessionRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const audioQueueRef = useRef<AudioBuffer[]>([]);
-  const isPlayingRef = useRef(false);
+  const nextStartTimeRef = useRef(0);
 
   /* ======================================================
-     SYNC USER
+     FETCH PROMPT (no manual user sync needed — token has user ID)
   ====================================================== */
   useEffect(() => {
-    if (!isSignedIn || !user || syncedRef.current) return;
+    if (!isAuthenticated) return;
 
     (async () => {
       try {
-        const token = await getToken();
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/auth/sync-user`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-        const data = await res.json();
-        if (data.uuid) setBackendUserId(data.uuid);
-        syncedRef.current = true;
-      } catch (err) {
-        console.error('User sync failed', err);
-      }
-    })();
-  }, [isSignedIn, user, getToken]);
-
-  /* ======================================================
-     FETCH PROMPT
-  ====================================================== */
-  useEffect(() => {
-    if (!backendUserId) return;
-
-    (async () => {
-      try {
-        const token = await getToken();
-        const data = await getVoicePrompt(token, backendUserId);
+        // getVoicePrompt() now attaches Bearer token automatically via interceptor
+        const data = await getVoicePrompt();
         setPromptData(data);
         setDebugMsg(
           `Ready. Mood: ${data.mood_category} (${data.mood_score.toFixed(0)}/100)`
@@ -83,7 +54,7 @@ const SolacePage: React.FC = () => {
         setError('Failed to load voice agent');
       }
     })();
-  }, [backendUserId, getToken]);
+  }, [isAuthenticated]);
 
   /* ======================================================
      MICROPHONE (ANDROID SAFE)
@@ -99,33 +70,30 @@ const SolacePage: React.FC = () => {
   };
 
   /* ======================================================
-     AUDIO PLAYBACK QUEUE
+     AUDIO PLAYBACK QUEUE (GAPLESS PRECISE SCHEDULING)
   ====================================================== */
   const playAudio = (ctx: AudioContext, buffer: AudioBuffer) => {
-    audioQueueRef.current.push(buffer);
-    if (!isPlayingRef.current) processQueue(ctx);
-  };
+    const now = ctx.currentTime;
+    const startTime = Math.max(now, nextStartTimeRef.current);
 
-  const processQueue = (ctx: AudioContext) => {
-    if (!audioQueueRef.current.length) {
-      isPlayingRef.current = false;
-      setStatus('connected');
-      return;
-    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(startTime);
 
-    isPlayingRef.current = true;
+    nextStartTimeRef.current = startTime + buffer.duration;
+
     setStatus('speaking');
-
-    const buffer = audioQueueRef.current.shift()!;
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    src.connect(ctx.destination);
-    src.onended = () => processQueue(ctx);
-    src.start();
+    source.onended = () => {
+      // Only flip back to 'connected' if this was the last scheduled chunk
+      if (nextStartTimeRef.current <= ctx.currentTime + 0.05) {
+        setStatus('connected');
+      }
+    };
   };
 
   /* ======================================================
-     CANVAS VISUALIZER (UNCHANGED)
+     CANVAS VISUALIZER
   ====================================================== */
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -137,32 +105,37 @@ const SolacePage: React.FC = () => {
     let raf: number;
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerY = canvas.height / 2;
+
+      if (status === 'idle') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(142,167,233,0.3)';
+        ctx.lineWidth = 2;
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(canvas.width, centerY);
+        ctx.stroke();
+        return; // Pause the animation loop!
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       let amp = 10;
       let speed = 0.05;
       let color = 'rgba(142,167,233,0.4)';
 
       if (status === 'connected') {
-        amp = 15;
-        speed = 0.08;
-        color = 'rgba(142,167,233,0.6)';
+        amp = 15; speed = 0.08; color = 'rgba(142,167,233,0.6)';
       } else if (status === 'speaking') {
-        amp = 35;
-        speed = 0.15;
-        color = 'rgba(255,182,193,0.7)';
+        amp = 35; speed = 0.15; color = 'rgba(255,182,193,0.7)';
       } else if (status === 'processing') {
-        amp = 20;
-        speed = 0.2;
-        color = 'rgba(255,255,255,0.5)';
+        amp = 20; speed = 0.2; color = 'rgba(255,255,255,0.5)';
       }
 
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
-
         for (let x = 0; x < canvas.width; x++) {
           const y =
             centerY +
@@ -192,33 +165,26 @@ const SolacePage: React.FC = () => {
     setStatus('loading');
     setDebugMsg('Connecting...');
     setError(null);
+    nextStartTimeRef.current = 0;
 
     try {
-        const session = await connectToSolaceLive(
-            promptData.system_prompt,
-          
-            (buffer: AudioBuffer) => {
-              if (!sharedAudioContext) return;
-              playAudio(sharedAudioContext, buffer);
-            },
-          
-            (text, role, done) => {
-              if (text) setTranscript(text);
-              if (role === 'user') setStatus('processing');
-              if (done) setTranscript('');
-            },
-          
-            () => {
-              setStatus('idle');
-              setDebugMsg('Session ended');
-            },
-          
-            (err) => {
-              setError(err);
-              setStatus('idle');
-            }
-          );
-          
+      const session = await connectToSolaceLive(
+        promptData.system_prompt,
+        (buffer: AudioBuffer) => {
+          if (!sharedAudioContext) return;
+          playAudio(sharedAudioContext, buffer);
+        },
+        (text, role, done) => {
+          if (text) setTranscript(text);
+          if (role === 'user') setStatus('processing');
+          if (done) {
+            setTranscript('');
+            nextStartTimeRef.current = 0;
+          }
+        },
+        () => { setStatus('idle'); setDebugMsg('Session ended'); },
+        (err) => { setError(err); setStatus('idle'); }
+      );
 
       sessionRef.current = session;
       setStatus('connected');
@@ -234,7 +200,7 @@ const SolacePage: React.FC = () => {
      END SESSION
   ====================================================== */
   const endSession = async () => {
-    if (!sessionRef.current || !backendUserId) return;
+    if (!sessionRef.current) return;
 
     setStatus('loading');
     setDebugMsg('Analyzing mood...');
@@ -249,8 +215,8 @@ const SolacePage: React.FC = () => {
         micStream = null;
       }
 
-      const token = await getToken();
-      await uploadVoiceForMoodAnalysis(audio, token, backendUserId);
+      // uploadVoiceForMoodAnalysis() attaches Bearer token via interceptor
+      await uploadVoiceForMoodAnalysis(audio);
       setStatus('idle');
     } catch {
       setError('Mood analysis failed');
@@ -259,7 +225,7 @@ const SolacePage: React.FC = () => {
   };
 
   /* ======================================================
-     BUTTON TAP HANDLER (CRITICAL)
+     BUTTON TAP HANDLER
   ====================================================== */
   const toggleSession = async () => {
     if (status === 'idle') {
@@ -267,10 +233,8 @@ const SolacePage: React.FC = () => {
         sharedAudioContext = new AudioContext();
       }
       await sharedAudioContext.resume();
-
       const ok = await ensureMicPermission();
       if (!ok) return;
-
       startSession();
     } else {
       endSession();
@@ -278,9 +242,9 @@ const SolacePage: React.FC = () => {
   };
 
   /* ======================================================
-     UI (UNCHANGED)
+     LOADING STATE (while prompt fetches)
   ====================================================== */
-  if (!backendUserId) {
+  if (!promptData && !error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <RefreshCw className="animate-spin" size={48} />
@@ -292,14 +256,16 @@ const SolacePage: React.FC = () => {
     <div className="min-h-screen w-full bg-gradient-to-br from-[#FFF0F0] via-[#FDF5E6] to-[#F8F9FF] font-sans pb-24 relative overflow-hidden flex flex-col items-center justify-center">
 
       {/* DEBUG PANEL */}
-      <div className="absolute top-4 left-4 bg-black/80 text-green-400 p-3 text-xs rounded z-50 font-mono max-w-[280px]">
-        <p className="font-bold mb-1">Solace Debug</p>
-        <p>Status: {status}</p>
-        <p>User: {user?.firstName || '...'}</p>
-        <p>Mood: {promptData?.mood_category || '...'}</p>
-        <p className="mt-2 text-yellow-300">{debugMsg}</p>
-        {error && <p className="text-red-400 mt-2">⚠ {error}</p>}
-      </div>
+      {import.meta.env.DEV && (
+        <div className="absolute top-4 left-4 bg-black/80 text-green-400 p-3 text-xs rounded z-50 font-mono max-w-[280px]">
+          <p className="font-bold mb-1">Solace Debug</p>
+          <p>Status: {status}</p>
+          <p>User ID: {userId ? userId.slice(0, 8) + '...' : '...'}</p>
+          <p>Mood: {promptData?.mood_category || '...'}</p>
+          <p className="mt-2 text-yellow-300">{debugMsg}</p>
+          {error && <p className="text-red-400 mt-2">⚠ {error}</p>}
+        </div>
+      )}
 
       {/* MAIN */}
       <div className="relative z-10 w-full flex flex-col items-center justify-center h-full space-y-8">
@@ -307,7 +273,7 @@ const SolacePage: React.FC = () => {
           ref={canvasRef}
           width={400}
           height={256}
-          className="w-full max-w-md h-full"
+          className="w-full max-w-md h-auto aspect-[400/256] rounded-2xl"
         />
 
         <motion.p className="text-gray-600 text-lg">

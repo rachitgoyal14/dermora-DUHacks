@@ -15,12 +15,15 @@ class AzureVisionService:
         )
         self.deployment = settings.AZURE_OPENAI_DEPLOYMENT
     
-    def _encode_image(self, image_path: str) -> str:
-        """Encode image to base64."""
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
+    async def _encode_image(self, image_url: str) -> str:
+        """Encode image to base64 from a URL."""
+        import httpx
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(image_url)
+            resp.raise_for_status()
+            return base64.b64encode(resp.content).decode('utf-8')
     
-    async def analyze_single_image(self, image_path: str) -> Dict:
+    async def analyze_single_image(self, image_url: str) -> Dict:
         """
         Analyze a single skin image and extract detailed metrics.
         
@@ -33,10 +36,10 @@ class AzureVisionService:
                 "redness_level": 7.2,
                 "texture_roughness": 6.8,
                 "description": "Moderate eczema with..."
-            }
+             }
         """
         
-        base64_image = self._encode_image(image_path)
+        base64_image = await self._encode_image(image_url)
         
         prompt = """You are a dermatology AI assistant. Analyze this skin condition image and provide:
 
@@ -86,8 +89,8 @@ Respond ONLY in this JSON format:
     
     async def compare_images(
         self,
-        before_image_path: str,
-        after_image_path: str
+        before_image_url: str,
+        after_image_url: str
     ) -> Dict:
         """
         Compare two skin images and determine improvement.
@@ -103,8 +106,8 @@ Respond ONLY in this JSON format:
             }
         """
         
-        before_base64 = self._encode_image(before_image_path)
-        after_base64 = self._encode_image(after_image_path)
+        before_base64 = await self._encode_image(before_image_url)
+        after_base64 = await self._encode_image(after_image_url)
         
         prompt = """You are a dermatology AI assistant comparing two skin condition images taken over time.
 

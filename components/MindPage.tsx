@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import { 
     RefreshCw, 
     ChevronRight, 
@@ -10,7 +10,6 @@ import {
     ChevronLeft
 } from 'lucide-react';
 import BottomNav from './BottomNav';
-import { useBackendAuth } from '../contexts/AuthContext';
 import { 
     logMood, 
     getMoodQuestions,
@@ -22,15 +21,11 @@ import {
 } from '../services/api';
 import { connectToSolaceLive } from '../services/gemini';
 import { SadFace, NeutralFace, GoodFace, HappyFace } from './MoodFaces';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 type SessionStatus = 'idle' | 'loading' | 'connected' | 'speaking' | 'processing';
 type ViewMode = 'hub' | 'mood' | 'voice';
 
 const MindPage: React.FC = () => {
-    const { getToken } = useAuth();
-    
-    // ✅ NEW: Use global auth context - no more syncing!
-    const { backendUserId, isLoading: authLoading } = useBackendAuth();
+    const { isAuthenticated } = useAuth();
 
     // View state
     const [viewMode, setViewMode] = useState<ViewMode>('hub');
@@ -65,42 +60,33 @@ const MindPage: React.FC = () => {
         energy: ['Exhausted', 'Low', 'Good', 'Energized'],
     };
 
-    // Fetch initial data when backendUserId is available
+    // Fetch initial data when authenticated
     useEffect(() => {
-        if (!backendUserId) return;
+        if (!isAuthenticated) return;
 
         const fetchData = async () => {
             try {
-                const token = await getToken();
-                
-                // Fetch mood questions (public endpoint)
                 const questionsData = await getMoodQuestions();
                 setQuestions(questionsData.questions);
 
-                // Fetch voice prompt
-                const voiceData = await getVoicePrompt(token, backendUserId);
+                const voiceData = await getVoicePrompt();
                 setPromptData(voiceData);
 
-                // Fetch mood summary
-                const summary = await getMoodSummary(token, backendUserId);
+                const summary = await getMoodSummary();
                 setMoodSummary(summary);
-
             } catch (error) {
                 console.error('Failed to fetch data:', error);
             }
         };
 
         fetchData();
-    }, [backendUserId, getToken]);
+    }, [isAuthenticated]);
 
     // Submit mood log
     useEffect(() => {
         if (currentStep === questions.length && questions.length > 0 && !isLoggingMood && viewMode === 'mood') {
-            if (!backendUserId) return;
-
             const submitMoodLog = async () => {
                 setIsLoggingMood(true);
-                
                 try {
                     const moodScore = selectedAnswers['mood'];
                     const data = {
@@ -112,11 +98,8 @@ const MindPage: React.FC = () => {
                         logged_at: new Date().toISOString(),
                     };
 
-                    const token = await getToken();
-                    await logMood(data, token, backendUserId);
-                    
-                    // Refresh mood summary
-                    const summary = await getMoodSummary(token, backendUserId);
+                    await logMood(data);
+                    const summary = await getMoodSummary();
                     setMoodSummary(summary);
 
                     setTimeout(() => {
@@ -130,10 +113,9 @@ const MindPage: React.FC = () => {
                     setIsLoggingMood(false);
                 }
             };
-
             submitMoodLog();
         }
-    }, [currentStep, questions, selectedAnswers, backendUserId, getToken, isLoggingMood, viewMode]);
+    }, [currentStep, questions, selectedAnswers, isLoggingMood, viewMode]);
 
     // Canvas visualizer for voice
     useEffect(() => {
@@ -276,7 +258,7 @@ const MindPage: React.FC = () => {
     };
 
     const endVoiceSession = async () => {
-        if (!sessionRef.current || !backendUserId) return;
+        if (!sessionRef.current) return;
 
         setVoiceStatus('loading');
 
@@ -285,14 +267,11 @@ const MindPage: React.FC = () => {
             await sessionRef.current.disconnect();
             sessionRef.current = null;
 
-            const token = await getToken();
-            const moodResult = await uploadVoiceForMoodAnalysis(audioBlob, token, backendUserId);
-
+            await uploadVoiceForMoodAnalysis(audioBlob);
             setVoiceStatus('idle');
             setViewMode('hub');
 
-            // Refresh mood summary
-            const summary = await getMoodSummary(token, backendUserId);
+            const summary = await getMoodSummary();
             setMoodSummary(summary);
 
         } catch (e: any) {
@@ -302,8 +281,8 @@ const MindPage: React.FC = () => {
         }
     };
 
-    // ✅ NEW: Simpler loading check
-    if (authLoading) {
+    // Loading check
+    if (!isAuthenticated) {
         return (
             <div className="min-h-screen w-full bg-[#FFF5F5] flex items-center justify-center">
                 <div className="text-center">

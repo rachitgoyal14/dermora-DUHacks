@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import {
     TrendingUp,
     Calendar,
@@ -27,17 +27,11 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import BottomNav from './BottomNav';
-import { useBackendAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { 
-    generateWeeklyReport, 
-    getWeeklyReportHtml, 
-    getWeeklyReportsList,
-    deleteWeeklyReport 
-} from '../services/api';
+import { getDashboard, getMoodHistoryChart, getMoodSummary, getImprovementTracker,
+    generateWeeklyReport, getWeeklyReportHtml, getWeeklyReportsList, deleteWeeklyReport } from '../services/api';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 interface SkeletonPulseProps extends React.HTMLAttributes<HTMLDivElement> {
     className?: string;
@@ -145,8 +139,7 @@ interface DashboardStats {
 type TimeRange = '7' | '14' | '30';
 
 const InsightsPage: React.FC = () => {
-    const { getToken } = useAuth();
-    const { backendUserId, isLoading: authLoading } = useBackendAuth();
+    const { isAuthenticated } = useAuth();
     const { success, error, warning, info } = useToast();
 
     const [loading, setLoading] = useState(true);
@@ -170,84 +163,42 @@ const InsightsPage: React.FC = () => {
     const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
     const fetchAllData = async () => {
-        if (!backendUserId) return;
+        if (!isAuthenticated) return;
 
         try {
             setLoading(true);
-            const token = await getToken();
 
-            const dashboardResponse = await fetch(`${BACKEND_URL}/engagement/dashboard`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
-            });
-            
-            if (dashboardResponse.ok) {
-                const dashboard = await dashboardResponse.json();
-                setDashboardStats(dashboard);
-            }
+            const [dashboard, moodSummaryData, improvement] = await Promise.all([
+                getDashboard().catch(() => null),
+                getMoodSummary().catch(() => null),
+                getImprovementTracker().catch(() => null),
+            ]);
 
-            const moodHistoryResponse = await fetch(
-                `${BACKEND_URL}/engagement/mood/history?days=${timeRange}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Id': backendUserId
-                    }
-                }
-            );
-            
-            if (moodHistoryResponse.ok) {
-                const moodHistoryData = await moodHistoryResponse.json();
-                setMoodChartData(moodHistoryData.mood_data || []);
-            }
+            if (dashboard) setDashboardStats(dashboard);
+            if (moodSummaryData) setMoodSummary(moodSummaryData);
+            if (improvement) setImprovementData(improvement);
 
-            const moodSummaryResponse = await fetch(`${BACKEND_URL}/engagement/mood/summary`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
-            });
-            
-            if (moodSummaryResponse.ok) {
-                const summary = await moodSummaryResponse.json();
-                setMoodSummary(summary);
-            }
-
-            const improvementResponse = await fetch(`${BACKEND_URL}/skin/improvement-tracker`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': backendUserId
-                }
-            });
-            
-            if (improvementResponse.ok) {
-                const improvement = await improvementResponse.json();
-                setImprovementData(improvement);
-            }
+            const moodHistoryData = await getMoodHistoryChart(Number(timeRange)).catch(() => null);
+            if (moodHistoryData) setMoodChartData(Array.isArray(moodHistoryData) ? moodHistoryData : (moodHistoryData.mood_data || []));
 
             await fetchReports();
 
         } catch (err) {
-            console.error("Failed to fetch insights:", err);
-            error("Failed to load insights data");
+            console.error('Failed to fetch insights:', err);
+            error('Failed to load insights data');
         } finally {
             setLoading(false);
         }
     };
 
     const fetchReports = async () => {
-        if (!backendUserId) return;
-        
+        if (!isAuthenticated) return;
         try {
             setLoadingReports(true);
-            const token = await getToken();
-            
-            const reportsData = await getWeeklyReportsList(10, token, backendUserId);
+            const reportsData = await getWeeklyReportsList(10);
             setReports(reportsData.reports || []);
         } catch (err) {
-            console.error("Failed to fetch reports:", err);
+            console.error('Failed to fetch reports:', err);
             setReports([]);
         } finally {
             setLoadingReports(false);
@@ -255,69 +206,38 @@ const InsightsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        if (backendUserId) {
+        if (isAuthenticated) {
             fetchAllData();
         }
-    }, [backendUserId, timeRange]);
+    }, [isAuthenticated, timeRange]);
 
     const handleGenerateReport = async () => {
-        if (!backendUserId) {
-            error('User ID not available. Please log in again.');
-            return;
-        }
-
         try {
             setGeneratingReport(true);
-            
-            const token = await getToken();
-            if (!token) {
-                throw new Error('Authentication token not available');
-            }
-            
-            const reportData = await generateWeeklyReport(true, token, backendUserId);
-            
-            const isEmptyWeek = reportData.skin_trend === 'insufficient_data' || 
+            const reportData = await generateWeeklyReport(true);
+            const isEmptyWeek = reportData.skin_trend === 'insufficient_data' ||
                                reportData.metrics?.total_images_uploaded === 0;
-            
             if (isEmptyWeek) {
-                info(
-                    'Weekly Report Generated\n\nNote: No data was found for this week. Start uploading skin photos and logging mood to get personalized insights!',
-                    6000
-                );
+                info('Weekly Report Generated\n\nNote: No data was found for this week. Start uploading skin photos and logging mood to get personalized insights!', 6000);
             } else {
                 success('Weekly report generated successfully!');
             }
-            
             await fetchReports();
-            
         } catch (err: any) {
-            console.error("Failed to generate report:", err);
-            
-            let errorMessage = 'An error occurred while generating the report.';
-            
-            if (err.response?.data?.detail) {
-                errorMessage = err.response.data.detail;
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-            
-            error(`Report Generation Failed\n\n${errorMessage}`, 6000);
-            
+            console.error('Failed to generate report:', err);
+            error(`Report Generation Failed\n\n${err.message || 'An error occurred'}`, 6000);
         } finally {
             setGeneratingReport(false);
         }
     };
 
     const handleViewReport = async (weekStart: string) => {
-        if (!backendUserId) return;
-
         try {
-            const token = await getToken();
-            const htmlContent = await getWeeklyReportHtml(weekStart, token, backendUserId);
+            const htmlContent = await getWeeklyReportHtml(weekStart);
             setReportHtml(htmlContent);
             setSelectedReport(weekStart);
         } catch (err) {
-            console.error("Failed to fetch report:", err);
+            console.error('Failed to fetch report:', err);
             error('Failed to load report');
             setReportHtml('<p>Error loading report</p>');
         }
@@ -343,22 +263,18 @@ const InsightsPage: React.FC = () => {
 
     const handleDeleteReport = async (reportId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!backendUserId) return;
-
         setReportToDelete(reportId);
         setDeleteConfirmOpen(true);
     };
 
     const confirmDelete = async () => {
-        if (!reportToDelete || !backendUserId) return;
-
+        if (!reportToDelete) return;
         try {
-            const token = await getToken();
-            await deleteWeeklyReport(reportToDelete, token, backendUserId);
+            await deleteWeeklyReport(reportToDelete);
             setReports(reports.filter(r => r.report_id !== reportToDelete));
             success('Report deleted successfully');
         } catch (err) {
-            console.error("Failed to delete report:", err);
+            console.error('Failed to delete report:', err);
             error('Failed to delete report');
         } finally {
             setReportToDelete(null);
@@ -376,7 +292,7 @@ const InsightsPage: React.FC = () => {
         return '➡️';
     };
 
-    if (authLoading || loading) {
+    if (loading) {
         return <InsightsSkeleton />;
     }
 
