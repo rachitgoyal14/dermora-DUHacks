@@ -44,3 +44,5 @@ dermora-dinov2-vit-b-skin.pth
 .eslintcache
 .stylelintcache
 add_hashed_password.py
+commands.txt
+tunnel-id.md
