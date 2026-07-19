@@ -286,10 +286,20 @@ const Home: React.FC = () => {
                         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
                             <Activity size={24} className="text-pastel-blue mx-auto mb-2" />
                             <div className="text-2xl font-bold text-[#1A1A1A]">
-                                {stats.avg_mood_this_week?.toFixed(1) || '—'}
+                                {stats.avg_mood_this_week 
+                                    ? stats.avg_mood_this_week >= 75 ? '😊'
+                                    : stats.avg_mood_this_week >= 50 ? '😌'
+                                    : stats.avg_mood_this_week >= 25 ? '😐'
+                                    : '😔'
+                                    : '—'}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                                Avg Mood
+                                {stats.avg_mood_this_week
+                                    ? stats.avg_mood_this_week >= 75 ? 'Feeling great'
+                                    : stats.avg_mood_this_week >= 50 ? 'Steady mood'
+                                    : stats.avg_mood_this_week >= 25 ? 'Getting by'
+                                    : 'Tough week'
+                                    : 'No data'}
                             </div>
                         </div>
                         

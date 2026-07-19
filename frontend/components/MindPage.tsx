@@ -319,15 +319,39 @@ const MindPage: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-white/60 rounded-2xl p-3 text-center">
                                     <div className="text-2xl font-bold text-blue-600">
-                                        {moodSummary.avg_mood?.toFixed(1) || '—'}
+                                        {moodSummary.avg_mood 
+                                            ? moodSummary.avg_mood >= 75 ? '😊'
+                                            : moodSummary.avg_mood >= 50 ? '😌'
+                                            : moodSummary.avg_mood >= 25 ? '😐'
+                                            : '😔'
+                                            : '—'}
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">Avg Mood</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {moodSummary.avg_mood
+                                            ? moodSummary.avg_mood >= 75 ? 'Feeling great'
+                                            : moodSummary.avg_mood >= 50 ? 'Steady'
+                                            : moodSummary.avg_mood >= 25 ? 'Getting by'
+                                            : 'Tough times'
+                                            : 'Mood'}
+                                    </div>
                                 </div>
                                 <div className="bg-white/60 rounded-2xl p-3 text-center">
                                     <div className="text-2xl font-bold text-purple-600">
-                                        {moodSummary.avg_energy?.toFixed(1) || '—'}
+                                        {moodSummary.avg_energy 
+                                            ? moodSummary.avg_energy >= 75 ? '⚡'
+                                            : moodSummary.avg_energy >= 50 ? '💪'
+                                            : moodSummary.avg_energy >= 25 ? '🔋'
+                                            : '😴'
+                                            : '—'}
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">Avg Energy</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {moodSummary.avg_energy
+                                            ? moodSummary.avg_energy >= 75 ? 'High energy'
+                                            : moodSummary.avg_energy >= 50 ? 'Good energy'
+                                            : moodSummary.avg_energy >= 25 ? 'Low energy'
+                                            : 'Very tired'
+                                            : 'Energy'}
+                                    </div>
                                 </div>
                             </div>
                             <p className="text-xs text-gray-500 mt-3 text-center">
@@ -387,7 +411,7 @@ const MindPage: React.FC = () => {
                                             {promptData.prompt_name}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                            Mood: {promptData.mood_category} ({promptData.mood_score.toFixed(0)}/100)
+                                            Current mood: {promptData.mood_category}
                                         </p>
                                     </div>
                                 )}

@@ -319,9 +319,21 @@ const InsightsPage: React.FC = () => {
                             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200">
                                 <Activity size={20} className="text-blue-600 mb-2" />
                                 <div className="text-2xl font-bold text-[#1A1A1A]">
-                                    {dashboardStats.quick_stats?.avg_mood_this_week?.toFixed(1) || '—'}
+                                    {dashboardStats.quick_stats?.avg_mood_this_week 
+                                        ? dashboardStats.quick_stats.avg_mood_this_week >= 75 ? '😊'
+                                        : dashboardStats.quick_stats.avg_mood_this_week >= 50 ? '😌'
+                                        : dashboardStats.quick_stats.avg_mood_this_week >= 25 ? '😐'
+                                        : '😔'
+                                        : '—'}
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1">Avg Mood</div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                    {dashboardStats.quick_stats?.avg_mood_this_week
+                                        ? dashboardStats.quick_stats.avg_mood_this_week >= 75 ? 'Feeling great'
+                                        : dashboardStats.quick_stats.avg_mood_this_week >= 50 ? 'Steady mood'
+                                        : dashboardStats.quick_stats.avg_mood_this_week >= 25 ? 'Getting by'
+                                        : 'Tough week'
+                                        : 'No mood data'}
+                                </div>
                             </div>
 
                             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200">
@@ -335,9 +347,15 @@ const InsightsPage: React.FC = () => {
                             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 border border-green-200">
                                 <TrendingUp size={20} className="text-green-600 mb-2" />
                                 <div className="text-2xl font-bold text-[#1A1A1A]">
-                                    {improvementData?.overall_improvement_percentage?.toFixed(0) || '0'}%
+                                    {improvementData?.overall_trend 
+                                        ? improvementData.overall_trend === 'improving' ? '📈'
+                                        : improvementData.overall_trend === 'worsening' ? '📉'
+                                        : '➡️'
+                                        : '—'}
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1">Improvement</div>
+                                <div className="text-xs text-gray-600 mt-1 capitalize">
+                                    {improvementData?.overall_trend || 'No data yet'}
+                                </div>
                             </div>
                         </div>
                     </motion.div>
@@ -421,23 +439,27 @@ const InsightsPage: React.FC = () => {
                         </ResponsiveContainer>
 
                         {moodSummary && (
-                            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3 text-center">
+                            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3 text-center">
                                 <div>
-                                    <div className="text-xs text-gray-500">Avg Mood</div>
-                                    <div className="text-lg font-bold text-pink-600">
-                                        {moodSummary.avg_mood?.toFixed(1) || '—'}
+                                    <div className="text-xs text-gray-500">Mood This Week</div>
+                                    <div className="text-2xl font-bold text-pink-600">
+                                        {moodSummary.avg_mood 
+                                            ? moodSummary.avg_mood >= 75 ? '😊 Great'
+                                            : moodSummary.avg_mood >= 50 ? '😌 Good'
+                                            : moodSummary.avg_mood >= 25 ? '😐 Okay'
+                                            : '😔 Tough'
+                                            : '—'}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-500">Avg Energy</div>
-                                    <div className="text-lg font-bold text-blue-600">
-                                        {moodSummary.avg_energy?.toFixed(1) || '—'}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-gray-500">Total Logs</div>
-                                    <div className="text-lg font-bold text-purple-600">
-                                        {moodSummary.total_logs || 0}
+                                    <div className="text-xs text-gray-500">Energy Level</div>
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {moodSummary.avg_energy 
+                                            ? moodSummary.avg_energy >= 75 ? '⚡ High'
+                                            : moodSummary.avg_energy >= 50 ? '💪 Good'
+                                            : moodSummary.avg_energy >= 25 ? '🔋 Low'
+                                            : '😴 Tired'
+                                            : '—'}
                                     </div>
                                 </div>
                             </div>
@@ -460,7 +482,7 @@ const InsightsPage: React.FC = () => {
                             {improvementData.weekly_improvements.map((week: any, idx: number) => {
                                 const getTrendColor = (trend: string) => {
                                     if (trend === 'improving') return 'bg-green-50 border-green-200 text-green-700';
-                                    if (trend === 'worsening') return 'bg-red-50 border-red-200 text-red-700';
+                                    if (trend === 'worsening') return 'bg-amber-50 border-amber-200 text-amber-700';
                                     return 'bg-gray-50 border-gray-200 text-gray-700';
                                 };
 
@@ -468,14 +490,13 @@ const InsightsPage: React.FC = () => {
                                     <div key={idx} className={`p-4 rounded-xl border ${getTrendColor(week.trend)}`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="font-semibold">Week {week.week_number}</span>
-                                            <span className="text-sm font-medium capitalize">{week.trend}</span>
+                                            <span className="text-sm font-medium capitalize flex items-center gap-1">
+                                                {week.trend === 'improving' && '✓ Improving'}
+                                                {week.trend === 'worsening' && '⚠ Needs attention'}
+                                                {week.trend === 'stable' && '→ Stable'}
+                                            </span>
                                         </div>
                                         <p className="text-sm">{week.summary}</p>
-                                        {week.confidence_change && (
-                                            <p className="text-xs mt-2">
-                                                Confidence change: {(week.confidence_change * 100).toFixed(1)}%
-                                            </p>
-                                        )}
                                     </div>
                                 );
                             })}

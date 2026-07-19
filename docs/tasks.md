@@ -6,8 +6,8 @@
  -->
 
 
-1. remove the confetti on successfull image analysis
-2. back camera must be enabled by default when user uses a camera to capture the image
+
+2. back camera must be enabled by default when user uses a camera to capture the image, it opens up the front camera now
 3. UI improvements including insights, design, home page and everything => it looks shitty right now, need to fix it
 the user need not see the mood score, or improvement %, so the UX is broken over here
 moreover the UI looks shitty as fuck, so fix that as well

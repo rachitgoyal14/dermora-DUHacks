@@ -254,7 +254,7 @@ const DetectPage: React.FC = () => {
                 quality: 90,
                 resultType: CameraResultType.Base64,
                 source: CameraSource.Camera,
-                direction: CameraDirection.Front,
+                direction: CameraDirection.Rear,
               });
               
               
@@ -543,7 +543,7 @@ const DetectPage: React.FC = () => {
         audio={false}
         ref={webcamRef}
         screenshotFormat="image/jpeg"
-        videoConstraints={{ facingMode: "user" }}
+        videoConstraints={{ facingMode: { ideal: "environment" } }}
         className="w-full h-full object-cover"
       />
     )}
@@ -669,25 +669,16 @@ const DetectPage: React.FC = () => {
                                 <h2 className="text-2xl font-bold text-gray-800">Analysis Complete</h2>
                             </motion.div>
 
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                            {/* Stats Grid - NO RAW NUMBERS */}
+                            <div className="grid grid-cols-1 gap-4 mb-6">
                                 <motion.div 
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.1 }}
                                     className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200"
                                 >
-                                    <p className="text-xs text-gray-600 uppercase tracking-wide mb-1 font-semibold">Condition</p>
+                                    <p className="text-xs text-gray-600 uppercase tracking-wide mb-1 font-semibold">Condition Detected</p>
                                     <p className="font-bold text-xl text-gray-900 capitalize">{result.prediction}</p>
-                                </motion.div>
-                                <motion.div 
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200"
-                                >
-                                    <p className="text-xs text-gray-600 uppercase tracking-wide mb-1 font-semibold">Confidence</p>
-                                    <p className="font-bold text-xl text-gray-900">{(result.confidence * 100).toFixed(1)}%</p>
                                 </motion.div>
                             </div>
 
@@ -793,11 +784,6 @@ const DetectPage: React.FC = () => {
                                         </div>
                                     </div>
                                     <p className="text-sm leading-relaxed">{week.summary}</p>
-                                    {week.confidence_change && (
-                                        <p className="text-xs mt-2 font-medium">
-                                            Change: {(week.confidence_change * 100).toFixed(1)}%
-                                        </p>
-                                    )}
                                 </motion.div>
                             ))}
                         </div>
@@ -921,19 +907,11 @@ const DetectPage: React.FC = () => {
           <h2 className="text-xl font-bold text-gray-800">Re-Analysis Complete</h2>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="p-4 bg-blue-50 rounded-2xl">
-            <p className="text-xs uppercase font-semibold">Prediction</p>
-            <p className="font-bold text-lg capitalize">
-              {actionResult.prediction}
-            </p>
-          </div>
-          <div className="p-4 bg-purple-50 rounded-2xl">
-            <p className="text-xs uppercase font-semibold">Confidence</p>
-            <p className="font-bold text-lg">
-              {(actionResult.confidence * 100).toFixed(1)}%
-            </p>
-          </div>
+        <div className="p-4 bg-blue-50 rounded-2xl mb-4">
+          <p className="text-xs uppercase font-semibold text-blue-600 mb-1">Condition Detected</p>
+          <p className="font-bold text-lg capitalize text-gray-900">
+            {actionResult.prediction}
+          </p>
         </div>
 
         {actionResult.message && (
@@ -975,30 +953,23 @@ const DetectPage: React.FC = () => {
       </p>
     </div>
 
-    {/* METRICS */}
-    <div className="grid grid-cols-3 gap-3 text-center">
+    {/* METRICS - SIMPLIFIED, NO RAW PERCENTAGES */}
+    <div className="grid grid-cols-2 gap-3 text-center">
       <div className="bg-gray-50 rounded-xl p-3">
-        <p className="text-xs text-gray-500">Days Between</p>
-        <p className="font-bold">{actionResult.days_between}</p>
-      </div>
-
-      <div className="bg-gray-50 rounded-xl p-3">
-        <p className="text-xs text-gray-500">Confidence Change</p>
-        <p className="font-bold">
-          {(actionResult.confidence_change * 100).toFixed(3)}%
-        </p>
+        <p className="text-xs text-gray-500">Time Between</p>
+        <p className="font-bold">{actionResult.days_between} days</p>
       </div>
 
       <div
         className={`rounded-xl p-3 ${
           actionResult.improvement_detected
             ? 'bg-green-50 text-green-700'
-            : 'bg-yellow-50 text-yellow-700'
+            : 'bg-gray-50 text-gray-600'
         }`}
       >
-        <p className="text-xs">Trend</p>
+        <p className="text-xs">Status</p>
         <p className="font-bold">
-          {actionResult.improvement_detected ? 'Improved' : 'Stable'}
+          {actionResult.improvement_detected ? '✓ Improving' : 'Stable'}
         </p>
       </div>
     </div>
