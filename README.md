@@ -144,14 +144,14 @@ The mobile application leverages modern web technologies wrapped in native mobil
 - **Capacitor 8.0** - Native runtime for iOS and Android platforms
 - **TypeScript** - Type-safe development with enhanced IDE support
 - **Vite** - High-performance build tooling and development server
-- **Chakra UI & Tailwind CSS** - Design system and utility-first styling
+- **Tailwind CSS v4** - Utility-first styling with a custom Clay & Bone design-token theme
 - **Framer Motion** - Declarative animation library
 
 **Architecture Features:**
 - Native camera integration via Capacitor Camera API
 - Mobile-first responsive design patterns
 - Progressive enhancement for offline capabilities
-- Clerk-based authentication and user management
+- Custom JWT-based authentication with secure token refresh
 - Real-time data synchronization protocols
 
 ### Backend - API Services
@@ -301,8 +301,8 @@ graph TD
 **Step 1: Repository Cloning**
 
 ```bash
-git clone https://github.com/yourusername/dermora-ai.git
-cd dermora-ai
+git clone https://github.com/rachitgoyal14/dermora-DUHacks.git
+cd dermora-DUHacks
 ```
 
 **Step 2: Backend Configuration**
@@ -378,7 +378,6 @@ Create `.env` file in frontend directory:
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key_here
 VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
@@ -704,7 +703,6 @@ The development of Dermora.ai has been made possible through the contributions o
 - **Hugging Face** - Model hosting infrastructure and machine learning platform
 - **Google Gemini Team** - Multimodal AI capabilities and voice-to-speech technology
 - **Neon Database** - Serverless PostgreSQL database infrastructure
-- **Clerk** - Authentication and user management system
 - **Capacitor** - Cross-platform mobile runtime
 
 **Data and Research Contributors:**
