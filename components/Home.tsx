@@ -15,7 +15,9 @@ import {
     ChevronRight
 } from 'lucide-react';
 import BottomNav from './BottomNav';
-import { getDashboard, getDailyInsight, dailyCheckIn, DashboardData, DailyInsight } from '../services/api';
+import { dailyCheckIn, DashboardData, DailyInsight } from '../services/api';
+import { useDashboard, useDailyInsight } from '../hooks/queries';
+import { queryClient } from '../services/queryClient';
 
 // Skeleton Pulse Component
 const SkeletonPulse: React.FC<{ className?: string }> = ({ className = '' }) => (
@@ -135,31 +137,13 @@ const Home: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     
-    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-    const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null);
-    const [loading, setLoading] = useState(true);
     const [checkingIn, setCheckingIn] = useState(false);
 
-    // Fetch dashboard data
-    useEffect(() => {
-        const fetchDashboard = async () => {
-            if (!isAuthenticated) return;
-            try {
-                setLoading(true);
-                const [dashboard, insight] = await Promise.all([
-                    getDashboard(),
-                    getDailyInsight().catch(() => null),
-                ]);
-                setDashboardData(dashboard);
-                setDailyInsight(insight);
-            } catch (err) {
-                console.error('Failed to fetch dashboard:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchDashboard();
-    }, [isAuthenticated]);
+    // Fetch dashboard data via React Query
+    const { data: dashboardData, isLoading: isDashboardLoading } = useDashboard();
+    const { data: dailyInsightData, isLoading: isInsightLoading } = useDailyInsight();
+
+    const dailyInsight = dailyInsightData || null;
 
     // Handle check-in
     const handleCheckIn = async () => {
@@ -167,8 +151,7 @@ const Home: React.FC = () => {
         try {
             setCheckingIn(true);
             await dailyCheckIn();
-            const dashboard = await getDashboard();
-            setDashboardData(dashboard);
+            await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         } catch (err) {
             console.error('Check-in failed:', err);
         } finally {
@@ -184,8 +167,8 @@ const Home: React.FC = () => {
         return lastCheckIn.toDateString() !== today.toDateString();
     };
 
-    // Show skeleton loading state instead of spinner
-    if (loading) {
+    // Show skeleton loading state only on first load
+    if (isDashboardLoading || isInsightLoading) {
         return <DashboardSkeleton />;
     }
 

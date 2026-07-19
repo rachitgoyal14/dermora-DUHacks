@@ -79,9 +79,12 @@ export async function login(email: string, password: string): Promise<AuthRespon
     return data;
 }
 
+import { queryClient } from './queryClient';
+
 export function logout(): void {
     _token = null;
     _userId = null;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_ID_KEY);
+    queryClient.clear();
 }
