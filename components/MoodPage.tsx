@@ -6,7 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { SadFace, NeutralFace, GoodFace, HappyFace } from './MoodFaces';
 import BottomNav from './BottomNav';
-import { logMood, getMoodQuestions } from '../services/api';
+import { logMood } from '../services/api';
+import { useMoodQuestions } from '../hooks/queries';
+import { queryClient } from '../services/queryClient';
 import { Check, RefreshCw } from 'lucide-react';
 // Components
 const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
@@ -18,15 +20,26 @@ const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
         className={`
             relative w-full p-4 rounded-full flex items-center gap-4 transition-all duration-300
             ${isSelected
-                ? 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.08)] scale-[1.01]'
-                : 'bg-white/60 hover:bg-white/80 shadow-sm'
+                ? 'bg-pastel-pink shadow-md ring-2 ring-pastel-pink/20 scale-[1.02]'
+                : 'bg-white border border-gray-100 hover:bg-gray-50/50 hover:scale-[1.01]'
             }
         `}
     >
-        {/* Circular Emoji Container */}
+        {/* Selection Dot */}
         <div className={`
-            w-14 h-14 rounded-full flex items-center justify-center text-3xl shrink-0
-            ${isSelected ? 'bg-orange-50' : 'bg-gray-50'}
+            w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300
+            ${isSelected ? 'bg-white' : 'bg-gray-100'}
+        `}>
+            {isSelected ? (
+                <Check size={20} className="text-[#1A1A1A]" />
+            ) : (
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+            )}
+        </div>
+
+        {/* Custom Face Icon wrapper */}
+        <div className={`
+            w-10 h-10 rounded-full flex items-center justify-center text-2xl
             transition-colors duration-300
         `}>
             {icon}
@@ -43,7 +56,14 @@ const MoodPage: React.FC = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
 
-    const [questions, setQuestions] = useState<any[]>([]);
+    const { data: questionsData, isLoading } = useMoodQuestions();
+    const questions = questionsData?.questions || [
+        { id: 'mood', prompt: 'How are you feeling right now?' },
+        { id: 'stress', prompt: 'How stressed do you feel?' },
+        { id: 'anxiety', prompt: 'How anxious are you feeling?' },
+        { id: 'energy', prompt: 'How is your energy level?' },
+    ];
+
     const [currentStep, setCurrentStep] = useState<number>(0);
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -58,27 +78,6 @@ const MoodPage: React.FC = () => {
         anxiety: ['Very Anxious', 'Anxious', 'Mild', 'Calm'],
         energy: ['Exhausted', 'Low', 'Good', 'Energized'],
     };
-
-    // Fetch questions from backend (public endpoint)
-    useEffect(() => {
-        const fetchQuestions = async () => {
-            try {
-                const response = await getMoodQuestions();
-                setQuestions(response.questions);
-                setCurrentStep(0);
-            } catch (error) {
-                console.error('Failed to fetch mood questions:', error);
-                setQuestions([
-                    { id: 'mood', prompt: 'How are you feeling right now?' },
-                    { id: 'stress', prompt: 'How stressed do you feel?' },
-                    { id: 'anxiety', prompt: 'How anxious are you feeling?' },
-                    { id: 'energy', prompt: 'How is your energy level?' },
-                ]);
-                setCurrentStep(0);
-            }
-        };
-        fetchQuestions();
-    }, []);
 
     // Submit mood log when all questions answered
     useEffect(() => {
@@ -96,6 +95,12 @@ const MoodPage: React.FC = () => {
                         logged_at: new Date().toISOString(),
                     };
                     await logMood(data);
+                    // Invalidate queries to refresh charts/summaries
+                    await Promise.all([
+                        queryClient.invalidateQueries({ queryKey: ['moodSummary'] }),
+                        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+                        queryClient.invalidateQueries({ queryKey: ['moodHistoryChart'] }),
+                    ]);
                     setTimeout(() => navigate('/mind'), 1500);
                 } catch (error) {
                     console.error('Failed to log mood:', error);
