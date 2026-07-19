@@ -39,3 +39,4 @@ pytest
 pytest-asyncio 
 httpx
 boto3
+email-validator

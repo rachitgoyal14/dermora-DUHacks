@@ -1,70 +1,5 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Testing
-coverage/
-dermora-dinov2-vit-b-skin.pth
-# Production builds
-dist/
-build/
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS Files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Android
-android/app/build/
-android/app/release/
-android/app/debug/
-android/.gradle/
-android/build/
-android/local.properties
-android/.cxx/
-android/captures/
-*.apk
-*.aab
-*.ap_
-*.dex
-
-# iOS
-ios/App/build/
-ios/App/Pods/
-ios/App/*.xcworkspace
-ios/App/xcuserdata/
-ios/App/DerivedData/
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Capacitor
-.capacitor/
-android/capacitor-cordova-android-plugins/
-ios/capacitor-cordova-ios-plugins/
-
-# OS
 Thumbs.db
 .DocumentRevisions-V100
 .fseventsd
@@ -74,28 +9,38 @@ Thumbs.db
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# Python/Backend Virtualenv
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Misc
+# Backend Secrets
+backend/.env
+
+# AI Models and Datasets
+dataset/
+*.pth
+best_dino_base_518.pth
+best_dino_finetuned.pth
+best_dino_with_normal.pth
+dermora-dinov2-vit-b-skin.pth
+
+# Editor Configurations
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Miscellaneous
 *.log
 *.cache
 .npm
 .eslintcache
 .stylelintcache
-venv/
-.env
-__pycache__/
-*.pyc
-.kiro
-.vscode
-best_dino_base_518.pth
-dataset/
-best_dino_finetuned.pth
-best_dino_with_normal.pth
-package-lock.json
 add_hashed_password.py
