@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import BottomNav from './BottomNav';
 import {
@@ -22,6 +22,17 @@ type SessionStatus =
   | 'connected'
   | 'speaking'
   | 'processing';
+
+/* ======================================================
+   QUALITATIVE MOOD LABEL — no raw numbers shown to user
+   Mirrors the bucketing used in Home.tsx (getMoodPhrase)
+====================================================== */
+function getMoodLabel(score: number): string {
+  if (score >= 75) return 'Great';
+  if (score >= 50) return 'Good';
+  if (score >= 25) return 'Okay';
+  return 'Tough';
+}
 
 const SolacePage: React.FC = () => {
   const { isAuthenticated, userId } = useAuth();
@@ -47,8 +58,9 @@ const SolacePage: React.FC = () => {
         // getVoicePrompt() now attaches Bearer token automatically via interceptor
         const data = await getVoicePrompt();
         setPromptData(data);
+        // Use qualitative label — no raw score exposed to the debug panel or UI
         setDebugMsg(
-          `Ready. Mood: ${data.mood_category} (${data.mood_score.toFixed(0)}/100)`
+          `Ready. Mood: ${data.mood_category} (${getMoodLabel(data.mood_score)})`
         );
       } catch (e) {
         setError('Failed to load voice agent');
@@ -246,21 +258,39 @@ const SolacePage: React.FC = () => {
   ====================================================== */
   if (!promptData && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bone-50">
-        <RefreshCw className="animate-spin text-plum-500" size={48} />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-bone-50">
+        <RefreshCw className="animate-spin text-plum-500" size={36} />
+        <p className="text-sm text-ink-500 font-sans">Setting up your session…</p>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen w-full bg-bone-50 font-sans pb-24 relative overflow-hidden flex flex-col items-center justify-center">
+  /* ======================================================
+     STATUS HELPERS
+  ====================================================== */
+  const statusLabel: Record<SessionStatus, string> = {
+    idle: 'Ready when you are',
+    loading: 'Connecting…',
+    connected: 'Listening…',
+    speaking: 'Solace is speaking…',
+    processing: 'Processing…',
+  };
 
-      {/* Full-bleed grain-textured band — the one signature flourish for this page */}
+  return (
+    <div className="min-h-screen w-full bg-bone-50 font-sans pb-24 relative overflow-hidden flex flex-col">
+
+      {/* Sticky header — matches other pages: title + eyebrow */}
+      <div className="sticky top-0 bg-bone-50/80 backdrop-blur-lg z-40 pt-8 px-6 pb-4 border-b border-ink-900/8">
+        <span className="eyebrow text-plum-500 block mb-0.5">Voice</span>
+        <h1 className="font-display text-3xl text-ink-900 font-semibold leading-tight">Solace</h1>
+      </div>
+
+      {/* Subtle plum grain band — signature flourish for this feature */}
       <div className="grain absolute top-0 left-0 right-0 h-72 bg-gradient-to-b from-plum-100 to-transparent pointer-events-none" />
 
-      {/* DEBUG PANEL */}
+      {/* DEBUG PANEL — dev only, never seen by users in production */}
       {import.meta.env.DEV && (
-        <div className="absolute top-4 left-4 bg-black/80 text-green-400 p-3 text-xs rounded z-50 font-mono max-w-[280px]">
+        <div className="absolute top-20 left-4 bg-black/80 text-green-400 p-3 text-xs rounded z-50 font-mono max-w-[280px]">
           <p className="font-bold mb-1">Solace Debug</p>
           <p>Status: {status}</p>
           <p>User ID: {userId ? userId.slice(0, 8) + '...' : '...'}</p>
@@ -270,23 +300,54 @@ const SolacePage: React.FC = () => {
         </div>
       )}
 
-      {/* MAIN */}
-      <div className="relative z-10 w-full max-w-md mx-auto px-6 flex flex-col items-center">
+      {/* MAIN — immersive centered layout (intentional for voice UX) */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full max-w-md mx-auto px-6 py-8">
 
-        <span className="eyebrow text-plum-600 mb-6">Solace</span>
+        {/* Error banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="w-full mb-6 p-4 bg-amber-50 border border-amber-500/20 rounded-lg flex items-center gap-3"
+            >
+              <span className="text-amber-500 text-lg">⚠</span>
+              <p className="text-sm text-ink-700 font-medium">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
+        {/* Session card */}
         <div className="card-voice shape-signature w-full p-6 flex flex-col items-center space-y-8">
+
+          {/* Waveform visualizer */}
           <canvas
             ref={canvasRef}
             width={400}
-            height={256}
-            className="w-full max-w-md h-auto aspect-[400/256] rounded-lg"
+            height={200}
+            className="w-full max-w-md h-auto aspect-[400/200] rounded-lg"
           />
 
-          <motion.p className="text-ink-600 text-lg leading-relaxed text-center">
-            {transcript || 'Tap to Start'}
-          </motion.p>
+          {/* Status + transcript */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={transcript || statusLabel[status]}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+              className="text-center"
+            >
+              {transcript ? (
+                <p className="text-ink-700 text-base leading-relaxed">{transcript}</p>
+              ) : (
+                <p className="text-ink-500 text-sm font-medium">{statusLabel[status]}</p>
+              )}
+            </motion.div>
+          </AnimatePresence>
 
+          {/* CTA Button — follows btn-primary / btn-secondary pattern */}
           <motion.button
             onClick={toggleSession}
             disabled={status === 'loading'}
@@ -297,9 +358,28 @@ const SolacePage: React.FC = () => {
                 : 'bg-ink-900 hover:bg-ink-700 text-bone-50'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {status === 'idle' ? 'Start Session' : 'End Session'}
+            {status === 'loading' ? (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="animate-spin" size={16} />
+                Connecting…
+              </span>
+            ) : status === 'idle' ? (
+              'Start Session'
+            ) : (
+              'End Session'
+            )}
           </motion.button>
+
         </div>
+
+        {/* Mood context — qualitative only */}
+        {promptData && (
+          <p className="text-xs text-ink-500 mt-6 text-center">
+            Today's mood: <span className="text-ink-700 font-medium">{promptData.mood_category}</span>
+            {' · '}
+            <span className="text-ink-600">{getMoodLabel(promptData.mood_score)}</span>
+          </p>
+        )}
       </div>
 
       <BottomNav />

@@ -262,14 +262,14 @@ const InsightsPage: React.FC = () => {
         <div className="min-h-screen w-full bg-bone-50 font-sans text-skin-text overflow-x-hidden pb-24">
 
             <motion.nav
-                className="sticky top-0 z-40 px-5 py-4 bg-bone-50/95 backdrop-blur-md border-b border-gray-100"
+                className="sticky top-0 z-40 px-5 py-4 bg-bone-50/95 backdrop-blur-md border-b border-ink-900/8"
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
             >
                 <div className="flex justify-between items-center max-w-md mx-auto">
                     <div>
-                        <h1 className="font-display font-bold text-2xl text-[#1A1A1A]">Insights</h1>
-                        <p className="text-xs text-ink-400">Your progress & analytics</p>
+                        <h1 className="font-display font-semibold text-2xl text-ink-900">Insights</h1>
+                        <p className="text-xs text-ink-500">Your progress & analytics</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center">
                         <BarChart3 size={24} className="text-white" />
@@ -304,21 +304,19 @@ const InsightsPage: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                            Quick Stats
-                        </h2>
+                        <h2 className="eyebrow mb-3">Quick Stats</h2>
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-sage-50 rounded-lg p-4 border border-sage-200">
+                            <div className="card-skin rounded-lg p-4">
                                 <Camera size={20} className="text-sage-600 mb-2" />
-                                <div className="text-2xl font-bold text-ink-900">
+                                <div className="text-2xl font-semibold text-ink-900">
                                     {dashboardStats.recent_activity?.images_this_week || 0}
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1">Images This Week</div>
+                                <div className="text-xs text-ink-600 mt-1">Images This Week</div>
                             </div>
 
-                            <div className="bg-plum-50 rounded-lg p-4 border border-plum-200">
-                                <Activity size={20} className="text-plum-600 mb-2" />
-                                <div className="text-2xl font-bold text-ink-900">
+                            <div className="card-voice rounded-lg p-4">
+                                <Activity size={20} className="text-plum-500 mb-2" />
+                                <div className="text-2xl font-semibold text-ink-900">
                                     {dashboardStats.quick_stats?.avg_mood_this_week 
                                         ? dashboardStats.quick_stats.avg_mood_this_week >= 75 ? 'Great'
                                         : dashboardStats.quick_stats.avg_mood_this_week >= 50 ? 'Steady'
@@ -336,24 +334,24 @@ const InsightsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-moss-50 rounded-lg p-4 border border-moss-200">
-                                <Calendar size={20} className="text-purple-600 mb-2" />
-                                <div className="text-2xl font-bold text-[#1A1A1A]">
+                            <div className="card-skin rounded-lg p-4">
+                                <Calendar size={20} className="text-sage-600 mb-2" />
+                                <div className="text-2xl font-semibold text-ink-900">
                                     {dashboardStats.recent_activity?.days_active || 0}
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1">Active Days</div>
+                                <div className="text-xs text-ink-600 mt-1">Active Days</div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                                <TrendingUp size={20} className="text-green-600 mb-2" />
-                                <div className="text-2xl font-bold text-[#1A1A1A]">
+                            <div className="card-base rounded-lg p-4">
+                                <TrendingUp size={20} className="text-moss-500 mb-2" />
+                                <div className="text-2xl font-semibold text-ink-900">
                                     {improvementData?.overall_trend 
-                                        ? improvementData.overall_trend === 'improving' ? '📈'
-                                        : improvementData.overall_trend === 'worsening' ? '📉'
-                                        : '➡️'
+                                        ? improvementData.overall_trend === 'improving' ? 'Up'
+                                        : improvementData.overall_trend === 'worsening' ? 'Down'
+                                        : 'Stable'
                                         : '—'}
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1 capitalize">
+                                <div className="text-xs text-ink-600 mt-1 capitalize">
                                     {improvementData?.overall_trend || 'No data yet'}
                                 </div>
                             </div>
@@ -366,12 +364,10 @@ const InsightsPage: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="bg-white rounded-lg p-5 shadow-md border border-gray-100"
+                        className="card-base rounded-lg p-5 border-ink-900/8"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
-                                Mood Trends
-                            </h2>
+                            <h2 className="eyebrow">Mood Trends</h2>
                             <div className="flex gap-2">
                                 {(['7', '14', '30'] as TimeRange[]).map((range) => (
                                     <button
@@ -379,8 +375,8 @@ const InsightsPage: React.FC = () => {
                                         onClick={() => setTimeRange(range)}
                                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                                             timeRange === range
-                                                ? 'bg-pastel-blue text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                ? 'bg-plum-500 text-bone-50'
+                                                : 'bg-bone-100 text-ink-600 hover:bg-bone-200'
                                         }`}
                                     >
                                         {range}D
@@ -457,8 +453,8 @@ const InsightsPage: React.FC = () => {
                                         {moodSummary.avg_energy 
                                             ? moodSummary.avg_energy >= 75 ? 'High'
                                             : moodSummary.avg_energy >= 50 ? 'Good'
-                                            : moodSummary.avg_energy >= 25 ? '🔋 Low'
-                                            : '😴 Tired'
+                                            : moodSummary.avg_energy >= 25 ? 'Low'
+                                            : 'Tired'
                                             : '—'}
                                     </div>
                                 </div>
@@ -472,18 +468,16 @@ const InsightsPage: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="bg-white rounded-lg p-5 shadow-md border border-gray-100"
+                        className="card-skin rounded-lg p-5"
                     >
-                        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
-                            Skin Progress
-                        </h2>
+                        <h2 className="eyebrow mb-4">Skin Progress</h2>
 
                         <div className="space-y-3 mb-4">
                             {improvementData.weekly_improvements.map((week: any, idx: number) => {
                                 const getTrendColor = (trend: string) => {
-                                    if (trend === 'improving') return 'bg-green-50 border-green-200 text-green-700';
-                                    if (trend === 'worsening') return 'bg-amber-50 border-amber-200 text-amber-700';
-                                    return 'bg-gray-50 border-gray-200 text-gray-700';
+                                    if (trend === 'improving') return 'bg-moss-100 border-moss-500/20 text-moss-700';
+                                    if (trend === 'worsening') return 'bg-amber-100 border-amber-500/20 text-amber-700';
+                                    return 'bg-bone-100 border-ink-900/8 text-ink-700';
                                 };
 
                                 return (
@@ -502,12 +496,12 @@ const InsightsPage: React.FC = () => {
                             })}
                         </div>
 
-                        <div className="pt-4 border-t border-gray-100 text-center">
-                            <div className="text-xs text-gray-500">Overall Trend</div>
-                            <div className="text-2xl font-bold text-gray-800 capitalize">
+                        <div className="pt-4 border-t border-ink-900/8 text-center">
+                            <div className="eyebrow mb-1">Overall Trend</div>
+                            <div className="text-2xl font-semibold text-ink-900 capitalize">
                                 {improvementData.overall_trend || 'Stable'}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                                 Based on {improvementData.total_images || 0} images
                             </p>
                         </div>
@@ -520,27 +514,25 @@ const InsightsPage: React.FC = () => {
                     transition={{ delay: 0.3 }}
                 >
                     <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
-                            Weekly Reports
-                        </h2>
+                        <h2 className="eyebrow">Weekly Reports</h2>
                         <button
                             onClick={() => queryClient.invalidateQueries({ queryKey: ['weeklyReports'] })}
-                            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                            className="p-2 rounded-full bg-bone-100 hover:bg-bone-200 transition-colors border border-ink-900/8"
                         >
-                            <RefreshCw size={16} className="text-gray-600" />
+                            <RefreshCw size={16} className="text-ink-600" />
                         </button>
                     </div>
 
                     {loadingReports ? (
-                        <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-                            <RefreshCw className="animate-spin mx-auto mb-3 text-pastel-pink" size={32} />
-                            <p className="text-sm text-gray-500">Loading reports...</p>
+                        <div className="card-base rounded-lg p-8 text-center">
+                            <RefreshCw className="animate-spin mx-auto mb-3 text-clay-500" size={32} />
+                            <p className="text-sm text-ink-500">Loading reports...</p>
                         </div>
                     ) : reports.length === 0 ? (
-                        <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
-                            <Calendar className="mx-auto mb-3 text-gray-300" size={40} />
-                            <p className="text-sm text-gray-500 mb-1">No reports yet</p>
-                            <p className="text-xs text-gray-400">Generate your first report above!</p>
+                        <div className="card-base rounded-lg p-8 text-center">
+                            <Calendar className="mx-auto mb-3 text-ink-300" size={40} />
+                            <p className="text-sm text-ink-600 mb-1">No reports yet</p>
+                            <p className="text-xs text-ink-500">Generate your first report above!</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -550,7 +542,7 @@ const InsightsPage: React.FC = () => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                                    className="card-base rounded-lg p-4 border-ink-900/8 hover:shadow-sm transition-shadow cursor-pointer"
                                     onClick={() => handleViewReport(report.week_start)}
                                 >
                                     <div className="flex items-start justify-between">

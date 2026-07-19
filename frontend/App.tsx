@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -15,16 +15,54 @@ const SignUpPage = lazy(() => import('./components/SignUpPage'));
 
 // ── Protected route wrapper ──────────────────────────────────────────────────
 
+// ── Global loading screen — matches Clay & Bone design system ────────────────
+const GlobalLoader: React.FC = () => {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setVisible(true), 40); return () => clearTimeout(t); }, []);
+
+    return (
+        <div
+            className="min-h-screen flex flex-col items-center justify-center gap-6"
+            style={{
+                backgroundColor: 'var(--color-bone-50)',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 300ms ease',
+            }}
+        >
+            {/* Spinner — clay-500 to match primary accent */}
+            <div
+                className="rounded-full"
+                style={{
+                    width: 44,
+                    height: 44,
+                    border: '3px solid color-mix(in srgb, var(--color-clay-500) 18%, transparent)',
+                    borderTopColor: 'var(--color-clay-500)',
+                    animation: 'spin 0.9s linear infinite',
+                }}
+            />
+            <div className="text-center">
+                <p
+                    className="text-2xl tracking-tight"
+                    style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink-900)' }}
+                >
+                    dermora
+                </p>
+                <p
+                    className="text-sm mt-1"
+                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-ink-500)' }}
+                >
+                    Loading…
+                </p>
+            </div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
+};
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-400" />
-            </div>
-        );
-    }
+    if (isLoading) return <GlobalLoader />;
 
     return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
 };
@@ -35,11 +73,7 @@ function AppRoutes() {
     const { isAuthenticated } = useAuth();
 
     return (
-        <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-400" />
-            </div>
-        }>
+        <Suspense fallback={<GlobalLoader />}>
             <Routes>
                 {/* Public: Login page (redirects to /home if already authed) */}
                 <Route

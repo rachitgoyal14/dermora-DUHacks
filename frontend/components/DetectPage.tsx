@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Camera, Upload, RefreshCw, AlertCircle, CheckCircle, FileText, X, 
     History, ArrowLeftRight, Trash, RotateCcw, Search, Check, 
-    TrendingUp, TrendingDown, Minus, ChevronDown
+    TrendingUp, TrendingDown, Minus, ChevronDown, Sparkles
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 import { 
@@ -456,18 +456,26 @@ const DetectPage: React.FC = () => {
             <AnimatePresence>
                 {toast && (
                     <motion.div
-                        initial={{ opacity: 0, y: -50, scale: 0.95 }}
+                        initial={{ opacity: 0, y: -16, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -50, scale: 0.95 }}
-                        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full flex items-center gap-3 ${
-                            toast.type === 'success' 
-                                ? 'bg-moss-500 text-white shadow-md' 
-                                : 'bg-amber-500 text-white shadow-md'
-                        }`}
+                        exit={{ opacity: 0, y: -16, scale: 0.96 }}
+                        transition={{ type: 'spring', damping: 28, stiffness: 420 }}
+                        className="fixed top-4 left-4 right-4 z-50 max-w-md mx-auto"
+                        style={{ boxShadow: '0 4px 16px -4px rgba(42,36,32,0.14)' }}
                     >
-                        {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                        <span className="font-semibold">{toast.message}</span>
+                        <div className={`bg-bone-50 rounded-xl overflow-hidden flex items-stretch border ${
+                            toast.type === 'success' ? 'border-moss-500/20' : 'border-clay-500/20'
+                        }`}>
+                            <div className={`w-[3px] flex-shrink-0 ${
+                                toast.type === 'success' ? 'bg-moss-500' : 'bg-clay-500'
+                            }`} />
+                            <div className="flex items-center gap-3 px-4 py-3 flex-1">
+                                <span className={toast.type === 'success' ? 'text-moss-500' : 'text-clay-500'}>
+                                    {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                </span>
+                                <span className="text-sm font-medium text-ink-900 font-sans">{toast.message}</span>
+                            </div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -870,15 +878,15 @@ const DetectPage: React.FC = () => {
           <h2 className="text-xl font-semibold text-ink-900 font-display">Re-Analysis Complete</h2>
         </div>
 
-        <div className="p-4 bg-blue-50 rounded-2xl mb-4">
-          <p className="text-xs uppercase font-semibold text-blue-600 mb-1">Condition Detected</p>
-          <p className="font-bold text-lg capitalize text-gray-900">
+        <div className="p-4 bg-bone-100 rounded-lg border border-ink-900/8 mb-4">
+          <p className="eyebrow mb-1">Condition Detected</p>
+          <p className="font-semibold text-xl capitalize text-ink-900">
             {actionResult.prediction}
           </p>
         </div>
 
         {actionResult.message && (
-          <p className="text-sm text-gray-600">{actionResult.message}</p>
+          <p className="text-sm text-ink-700 leading-relaxed">{actionResult.message}</p>
         )}
       </>
     )}
@@ -888,8 +896,8 @@ const DetectPage: React.FC = () => {
 {actionResult._type === 'compare' && (
   <>
     <div className="flex items-center gap-3 mb-6">
-      <ArrowLeftRight className="text-orange-500" size={28} />
-      <h2 className="text-xl font-bold text-gray-800">
+      <ArrowLeftRight className="text-clay-500" size={28} />
+      <h2 className="text-xl font-semibold text-ink-900 font-display">
         Comparison Result
       </h2>
     </div>
@@ -898,41 +906,39 @@ const DetectPage: React.FC = () => {
     <div className="grid grid-cols-2 gap-4 mb-6">
       <img
         src={getImageUrl(actionResult.before_image.image_url) || "/placeholder.svg"}
-        className="rounded-2xl"
+        className="rounded-lg border border-ink-900/8"
       />
       <img
         src={getImageUrl(actionResult.after_image.image_url) || "/placeholder.svg"}
-        className="rounded-2xl"
+        className="rounded-lg border border-ink-900/8"
       />
     </div>
 
     {/* SUMMARY */}
-    <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-4">
-      <p className="text-xs uppercase font-semibold text-orange-600 mb-1">
-        Analysis Summary
-      </p>
-      <p className="text-sm text-gray-700">
+    <div className="bg-bone-100 border border-ink-900/8 rounded-lg p-4 mb-4">
+      <p className="eyebrow mb-1">Analysis Summary</p>
+      <p className="text-sm text-ink-700 leading-relaxed">
         {actionResult.summary}
       </p>
     </div>
 
-    {/* METRICS - SIMPLIFIED, NO RAW PERCENTAGES */}
+    {/* METRICS — qualitative, no raw numbers */}
     <div className="grid grid-cols-2 gap-3 text-center">
-      <div className="bg-gray-50 rounded-xl p-3">
-        <p className="text-xs text-gray-500">Time Between</p>
-        <p className="font-bold">{actionResult.days_between} days</p>
+      <div className="bg-bone-100 rounded-lg p-3 border border-ink-900/8">
+        <p className="text-xs text-ink-500 mb-1">Time Between</p>
+        <p className="font-semibold text-ink-900">{actionResult.days_between} days</p>
       </div>
 
       <div
-        className={`rounded-xl p-3 ${
+        className={`rounded-lg p-3 border ${
           actionResult.improvement_detected
-            ? 'bg-green-50 text-green-700'
-            : 'bg-gray-50 text-gray-600'
+            ? 'bg-moss-100 border-moss-500/20 text-moss-700'
+            : 'bg-bone-100 border-ink-900/8 text-ink-600'
         }`}
       >
-        <p className="text-xs">Status</p>
-        <p className="font-bold">
-          {actionResult.improvement_detected ? '✓ Improving' : 'Stable'}
+        <p className="text-xs mb-1">Status</p>
+        <p className="font-semibold">
+          {actionResult.improvement_detected ? '↑ Improving' : 'Stable'}
         </p>
       </div>
     </div>
@@ -944,10 +950,10 @@ const DetectPage: React.FC = () => {
     {actionResult._type === 'delete' && (
       <>
         <div className="flex items-center gap-3 mb-4">
-          <CheckCircle className="text-green-500" size={28} />
-          <h2 className="text-xl font-bold text-gray-800">Image Deleted</h2>
+          <CheckCircle className="text-moss-500" size={28} />
+          <h2 className="text-xl font-semibold text-ink-900 font-display">Image Deleted</h2>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-700 leading-relaxed">
           {actionResult.message || 'Image successfully removed.'}
         </p>
       </>

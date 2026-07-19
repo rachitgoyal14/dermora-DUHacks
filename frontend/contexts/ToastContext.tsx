@@ -110,7 +110,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
           paddingBottom: position === 'bottom' ? 'env(safe-area-inset-bottom, 16px)' : undefined,
         }}
       >
-        <div className="px-4 py-4 space-y-3 pointer-events-auto max-w-md mx-auto">
+        <div className="px-4 pt-4 pb-2 space-y-2.5 pointer-events-auto max-w-md mx-auto">
           <AnimatePresence mode="popLayout">
             {toasts.map((toast) => (
               <Toast

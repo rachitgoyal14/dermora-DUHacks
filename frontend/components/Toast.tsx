@@ -17,31 +17,39 @@ const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-gradient-to-r from-green-50 to-emerald-50',
-          border: 'border-green-200',
-          icon: <CheckCircle className="text-green-600" size={20} />,
-          iconBg: 'bg-green-100',
+          // moss tint — skin health / positive outcome
+          containerClass: 'bg-bone-50 border border-moss-500/20',
+          iconClass: 'text-moss-500',
+          iconBgClass: 'bg-moss-100',
+          icon: <CheckCircle size={18} />,
+          accentBar: 'bg-moss-500',
         };
       case 'error':
         return {
-          bg: 'bg-gradient-to-r from-red-50 to-rose-50',
-          border: 'border-red-200',
-          icon: <XCircle className="text-red-600" size={20} />,
-          iconBg: 'bg-red-100',
+          // clay tint — primary alert accent
+          containerClass: 'bg-bone-50 border border-clay-500/20',
+          iconClass: 'text-clay-500',
+          iconBgClass: 'bg-amber-100',
+          icon: <XCircle size={18} />,
+          accentBar: 'bg-clay-500',
         };
       case 'warning':
         return {
-          bg: 'bg-gradient-to-r from-amber-50 to-orange-50',
-          border: 'border-amber-200',
-          icon: <AlertCircle className="text-amber-600" size={20} />,
-          iconBg: 'bg-amber-100',
+          // amber tint — caution
+          containerClass: 'bg-bone-50 border border-amber-500/20',
+          iconClass: 'text-amber-500',
+          iconBgClass: 'bg-amber-100',
+          icon: <AlertCircle size={18} />,
+          accentBar: 'bg-amber-500',
         };
       case 'info':
         return {
-          bg: 'bg-gradient-to-r from-blue-50 to-sky-50',
-          border: 'border-blue-200',
-          icon: <Info className="text-blue-600" size={20} />,
-          iconBg: 'bg-blue-100',
+          // plum tint — neutral information
+          containerClass: 'bg-bone-50 border border-plum-500/20',
+          iconClass: 'text-plum-500',
+          iconBgClass: 'bg-plum-100',
+          icon: <Info size={18} />,
+          accentBar: 'bg-plum-500',
         };
     }
   };
@@ -51,33 +59,41 @@ const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -50, scale: 0.95 }}
+      initial={{ opacity: 0, y: -16, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 100, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+      exit={{ opacity: 0, x: 80, scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 480, damping: 38 }}
       className={`
-        ${styles.bg} ${styles.border}
-        border-2 rounded-2xl p-4 shadow-lg
-        backdrop-blur-sm w-full max-w-md
-        flex items-start gap-3
+        ${styles.containerClass}
+        rounded-xl overflow-hidden w-full max-w-md
+        flex items-stretch shadow-md
       `}
+      style={{ boxShadow: '0 4px 16px -4px rgba(42,36,32,0.12)' }}
     >
-      <div className={`${styles.iconBg} rounded-full p-2 flex-shrink-0`}>
-        {styles.icon}
-      </div>
-      
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-line">
+      {/* Left accent bar — 3px wide, full height */}
+      <div className={`w-[3px] flex-shrink-0 ${styles.accentBar}`} />
+
+      {/* Content */}
+      <div className="flex items-start gap-3 px-4 py-3.5 flex-1 min-w-0">
+        <div className={`${styles.iconBgClass} rounded-full p-1.5 flex-shrink-0 mt-0.5`}>
+          <span className={styles.iconClass}>{styles.icon}</span>
+        </div>
+
+        <p
+          className="text-sm leading-relaxed whitespace-pre-line flex-1 min-w-0"
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-ink-900)' }}
+        >
           {message}
         </p>
       </div>
 
+      {/* Close button */}
       <button
         onClick={() => onClose(id)}
-        className="flex-shrink-0 p-1 rounded-full hover:bg-gray-200/50 transition-colors"
+        className="flex-shrink-0 px-3 flex items-center self-stretch hover:bg-ink-900/4 transition-colors rounded-r-xl"
         aria-label="Close notification"
       >
-        <X size={16} className="text-gray-500" />
+        <X size={14} style={{ color: 'var(--color-ink-500)' }} />
       </button>
     </motion.div>
   );
