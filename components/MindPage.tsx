@@ -12,13 +12,12 @@ import {
 import BottomNav from './BottomNav';
 import { 
     logMood, 
-    getMoodQuestions,
-    getVoicePrompt,
     uploadVoiceForMoodAnalysis,
-    getMoodSummary,
     VoicePromptData,
     MoodSummary
 } from '../services/api';
+import { useMoodQuestions, useVoicePrompt, useMoodSummary } from '../hooks/queries';
+import { queryClient } from '../services/queryClient';
 import { connectToSolaceLive } from '../services/gemini';
 import { SadFace, NeutralFace, GoodFace, HappyFace } from './MoodFaces';
 type SessionStatus = 'idle' | 'loading' | 'connected' | 'speaking' | 'processing';
@@ -30,16 +29,21 @@ const MindPage: React.FC = () => {
     // View state
     const [viewMode, setViewMode] = useState<ViewMode>('hub');
 
+    // Fetch queries via React Query
+    const { data: questionsData } = useMoodQuestions();
+    const { data: voicePromptData } = useVoicePrompt();
+    const { data: moodSummary } = useMoodSummary();
+
+    const questions = questionsData?.questions || [];
+    const promptData = voicePromptData || null;
+
     // Mood state
-    const [questions, setQuestions] = useState<any[]>([]);
     const [currentStep, setCurrentStep] = useState<number>(0);
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [isLoggingMood, setIsLoggingMood] = useState(false);
-    const [moodSummary, setMoodSummary] = useState<MoodSummary | null>(null);
 
     // Voice state
-    const [promptData, setPromptData] = useState<VoicePromptData | null>(null);
     const [voiceStatus, setVoiceStatus] = useState<SessionStatus>('idle');
     const [transcript, setTranscript] = useState('');
     const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -60,28 +64,6 @@ const MindPage: React.FC = () => {
         energy: ['Exhausted', 'Low', 'Good', 'Energized'],
     };
 
-    // Fetch initial data when authenticated
-    useEffect(() => {
-        if (!isAuthenticated) return;
-
-        const fetchData = async () => {
-            try {
-                const questionsData = await getMoodQuestions();
-                setQuestions(questionsData.questions);
-
-                const voiceData = await getVoicePrompt();
-                setPromptData(voiceData);
-
-                const summary = await getMoodSummary();
-                setMoodSummary(summary);
-            } catch (error) {
-                console.error('Failed to fetch data:', error);
-            }
-        };
-
-        fetchData();
-    }, [isAuthenticated]);
-
     // Submit mood log
     useEffect(() => {
         if (currentStep === questions.length && questions.length > 0 && !isLoggingMood && viewMode === 'mood') {
@@ -99,8 +81,11 @@ const MindPage: React.FC = () => {
                     };
 
                     await logMood(data);
-                    const summary = await getMoodSummary();
-                    setMoodSummary(summary);
+                    await Promise.all([
+                        queryClient.invalidateQueries({ queryKey: ['moodSummary'] }),
+                        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+                        queryClient.invalidateQueries({ queryKey: ['moodHistoryChart'] }),
+                    ]);
 
                     setTimeout(() => {
                         setViewMode('hub');
@@ -271,8 +256,11 @@ const MindPage: React.FC = () => {
             setVoiceStatus('idle');
             setViewMode('hub');
 
-            const summary = await getMoodSummary();
-            setMoodSummary(summary);
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['moodSummary'] }),
+                queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+                queryClient.invalidateQueries({ queryKey: ['moodHistoryChart'] }),
+            ]);
 
         } catch (e: any) {
             console.error('End session error:', e);
