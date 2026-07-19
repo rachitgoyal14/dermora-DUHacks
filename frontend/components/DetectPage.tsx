@@ -217,7 +217,6 @@ const DetectPage: React.FC = () => {
     
     // UI States
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-    const [showConfetti, setShowConfetti] = useState(false);
 
     // Helper function for image URLs
     // const getImageUrl = (imageUrl: string) => {
@@ -325,10 +324,6 @@ const DetectPage: React.FC = () => {
             const compressedFile = await resizeImage(file, 1024);
             const backendResult = await uploadSkinImage(compressedFile, 'progress');
             setResult(backendResult);
-            if (backendResult.confidence > 0.8) {
-                setShowConfetti(true);
-                setTimeout(() => setShowConfetti(false), 3000);
-            }
             showToast('Image uploaded and analyzed successfully!', 'success');
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['mySkinImages'] }),
@@ -490,41 +485,6 @@ const DetectPage: React.FC = () => {
             {/* Decorative Background */}
             <div className="absolute top-[-10%] right-[-20%] w-[400px] h-[400px] bg-[#FFB6C1]/30 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-[10%] left-[-10%] w-[300px] h-[300px] bg-[#8EA7E9]/20 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Confetti Effect */}
-            <AnimatePresence>
-                {showConfetti && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 pointer-events-none z-50"
-                    >
-                        {[...Array(30)].map((_, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ 
-                                    x: Math.random() * window.innerWidth, 
-                                    y: -20,
-                                    rotate: 0 
-                                }}
-                                animate={{ 
-                                    y: window.innerHeight + 20,
-                                    rotate: 360,
-                                    x: Math.random() * window.innerWidth
-                                }}
-                                transition={{ 
-                                    duration: 2 + Math.random() * 2,
-                                    ease: "linear"
-                                }}
-                                className={`absolute w-2 h-2 ${
-                                    ['bg-[#FFB6C1]', 'bg-[#8EA7E9]', 'bg-[#FFA07A]', 'bg-[#66BB6A]'][Math.floor(Math.random() * 4)]
-                                } rounded-full`}
-                            />
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             {/* Toast Notification */}
             <AnimatePresence>
