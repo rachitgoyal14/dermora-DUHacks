@@ -93,7 +93,7 @@ const SolacePage: React.FC = () => {
   };
 
   /* ======================================================
-     CANVAS VISUALIZER
+     CANVAS VISUALIZER — recolored to the plum/ink Clay & Bone palette
   ====================================================== */
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -110,7 +110,7 @@ const SolacePage: React.FC = () => {
       if (status === 'idle') {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(142,167,233,0.3)';
+        ctx.strokeStyle = 'rgba(42,36,32,0.12)'; // ink-900, faint — quiet baseline
         ctx.lineWidth = 2;
         ctx.moveTo(0, centerY);
         ctx.lineTo(canvas.width, centerY);
@@ -122,14 +122,14 @@ const SolacePage: React.FC = () => {
 
       let amp = 10;
       let speed = 0.05;
-      let color = 'rgba(142,167,233,0.4)';
+      let color = 'rgba(125,100,133,0.4)'; // plum-500 default
 
       if (status === 'connected') {
-        amp = 15; speed = 0.08; color = 'rgba(142,167,233,0.6)';
+        amp = 15; speed = 0.08; color = 'rgba(125,100,133,0.45)'; // plum-500, listening
       } else if (status === 'speaking') {
-        amp = 35; speed = 0.15; color = 'rgba(255,182,193,0.7)';
+        amp = 35; speed = 0.15; color = 'rgba(125,100,133,0.75)'; // plum-500, saturated — agent speaking
       } else if (status === 'processing') {
-        amp = 20; speed = 0.2; color = 'rgba(255,255,255,0.5)';
+        amp = 20; speed = 0.2; color = 'rgba(122,113,104,0.55)'; // ink-500 — thinking
       }
 
       for (let i = 0; i < 3; i++) {
@@ -246,14 +246,17 @@ const SolacePage: React.FC = () => {
   ====================================================== */
   if (!promptData && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <RefreshCw className="animate-spin" size={48} />
+      <div className="min-h-screen flex items-center justify-center bg-bone-50">
+        <RefreshCw className="animate-spin text-plum-500" size={48} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#FFF0F0] via-[#FDF5E6] to-[#F8F9FF] font-sans pb-24 relative overflow-hidden flex flex-col items-center justify-center">
+    <div className="min-h-screen w-full bg-bone-50 font-sans pb-24 relative overflow-hidden flex flex-col items-center justify-center">
+
+      {/* Full-bleed grain-textured band — the one signature flourish for this page */}
+      <div className="grain absolute top-0 left-0 right-0 h-72 bg-gradient-to-b from-plum-100 to-transparent pointer-events-none" />
 
       {/* DEBUG PANEL */}
       {import.meta.env.DEV && (
@@ -268,34 +271,35 @@ const SolacePage: React.FC = () => {
       )}
 
       {/* MAIN */}
-      <div className="relative z-10 w-full flex flex-col items-center justify-center h-full space-y-8">
-        <canvas
-          ref={canvasRef}
-          width={400}
-          height={256}
-          className="w-full max-w-md h-auto aspect-[400/256] rounded-2xl"
-        />
+      <div className="relative z-10 w-full max-w-md mx-auto px-6 flex flex-col items-center">
 
-        <motion.p className="text-gray-600 text-lg">
-          {transcript || 'Tap to Start'}
-        </motion.p>
+        <span className="eyebrow text-plum-600 mb-6">Solace</span>
 
-        <motion.button
-          onClick={toggleSession}
-          disabled={status === 'loading'}
-          whileTap={{ scale: 0.95 }}
-          className={`px-8 py-3 rounded-full text-white ${
-            status === 'idle'
-              ? 'bg-gradient-to-r from-purple-500 to-pink-500'
-              : 'bg-red-500'
-          }`}
-        >
-          {status === 'idle' ? 'Start Session' : 'End Session'}
-        </motion.button>
+        <div className="card-voice shape-signature w-full p-6 flex flex-col items-center space-y-8">
+          <canvas
+            ref={canvasRef}
+            width={400}
+            height={256}
+            className="w-full max-w-md h-auto aspect-[400/256] rounded-lg"
+          />
 
-        <motion.h1 className="font-display text-sm tracking-[0.3em] uppercase opacity-60">
-          Solace
-        </motion.h1>
+          <motion.p className="text-ink-600 text-lg leading-relaxed text-center">
+            {transcript || 'Tap to Start'}
+          </motion.p>
+
+          <motion.button
+            onClick={toggleSession}
+            disabled={status === 'loading'}
+            whileTap={{ scale: 0.96 }}
+            className={`px-8 py-3 rounded-full font-semibold transition-colors ${
+              status === 'idle'
+                ? 'bg-clay-500 hover:bg-clay-600 text-bone-50'
+                : 'bg-ink-900 hover:bg-ink-700 text-bone-50'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {status === 'idle' ? 'Start Session' : 'End Session'}
+          </motion.button>
+        </div>
       </div>
 
       <BottomNav />

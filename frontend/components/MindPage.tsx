@@ -272,9 +272,9 @@ const MindPage: React.FC = () => {
     // Loading check
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen w-full bg-[#FFF5F5] flex items-center justify-center">
+            <div className="min-h-screen w-full bg-bone-50 flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="animate-spin mx-auto mb-4 text-pastel-blue" size={40} />
+                    <RefreshCw className="animate-spin mx-auto mb-4 text-plum-400" size={40} />
                     <p className="text-sm text-gray-500">Initializing...</p>
                 </div>
             </div>
@@ -284,11 +284,11 @@ const MindPage: React.FC = () => {
     // Hub view
     if (viewMode === 'hub') {
         return (
-            <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-skin-text overflow-x-hidden pb-24">
+            <div className="min-h-screen w-full bg-bone-50 font-sans text-skin-text overflow-x-hidden pb-24">
                 
                 {/* Header */}
                 <motion.nav 
-                    className="sticky top-0 z-40 px-5 py-4 bg-[#FFF5F5]/95 backdrop-blur-md border-b border-gray-100"
+                    className="sticky top-0 z-40 px-5 py-4 bg-bone-50/95 backdrop-blur-md border-b border-gray-100"
                     initial={{ y: -20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                 >
@@ -297,7 +297,7 @@ const MindPage: React.FC = () => {
                             <h1 className="font-display font-bold text-2xl text-[#1A1A1A]">Mind</h1>
                             <p className="text-xs text-gray-400">Mood & Voice Support</p>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pastel-blue to-pastel-lavender flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-plum-400 to-plum-300 flex items-center justify-center">
                             <Brain size={24} className="text-white" />
                         </div>
                     </div>
@@ -310,7 +310,7 @@ const MindPage: React.FC = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-5 shadow-md border border-blue-100"
+                            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-5 shadow-md border border-blue-100"
                         >
                             <div className="flex items-center gap-2 mb-3">
                                 <Activity size={20} className="text-blue-600" />
@@ -367,7 +367,7 @@ const MindPage: React.FC = () => {
                         transition={{ delay: 0.1 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setViewMode('mood')}
-                        className="w-full bg-white rounded-3xl p-6 shadow-md border border-gray-100 text-left"
+                        className="w-full bg-white rounded-lg p-6 shadow-md border border-gray-100 text-left"
                     >
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -392,7 +392,7 @@ const MindPage: React.FC = () => {
                         transition={{ delay: 0.2 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setViewMode('voice')}
-                        className="w-full bg-white rounded-3xl p-6 shadow-md border border-gray-100 text-left"
+                        className="w-full bg-white rounded-lg p-6 shadow-md border border-gray-100 text-left"
                     >
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -430,7 +430,7 @@ const MindPage: React.FC = () => {
     // Mood Check-In view
     if (viewMode === 'mood') {
         return (
-            <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-skin-text pb-24 relative flex flex-col">
+            <div className="min-h-screen w-full bg-bone-50 font-sans text-skin-text pb-24 relative flex flex-col">
 
                 {/* Header */}
                 <div className="pt-8 px-5 mb-6 relative z-10">

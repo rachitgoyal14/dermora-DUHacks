@@ -20,20 +20,20 @@ const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
         className={`
             relative w-full p-4 rounded-full flex items-center gap-4 transition-all duration-300
             ${isSelected
-                ? 'bg-pastel-pink shadow-md ring-2 ring-pastel-pink/20 scale-[1.02]'
-                : 'bg-white border border-gray-100 hover:bg-gray-50/50 hover:scale-[1.01]'
+                ? 'bg-plum-100 ring-2 ring-plum-200 scale-[1.02]'
+                : 'card-base hover:bg-bone-100 hover:scale-[1.01]'
             }
         `}
     >
         {/* Selection Dot */}
         <div className={`
             w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300
-            ${isSelected ? 'bg-white' : 'bg-gray-100'}
+            ${isSelected ? 'bg-white' : 'bg-bone-200'}
         `}>
             {isSelected ? (
-                <Check size={20} className="text-[#1A1A1A]" />
+                <Check size={20} className="text-ink-900" />
             ) : (
-                <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                <div className="w-2.5 h-2.5 rounded-full bg-ink-300" />
             )}
         </div>
 
@@ -46,7 +46,7 @@ const OptionCard = ({ label, icon, isSelected, onClick, delay }: any) => (
         </div>
 
         {/* Label */}
-        <span className={`text-lg font-bold text-left flex-1 ${isSelected ? 'text-[#1A1A1A]' : 'text-gray-600'}`}>
+        <span className={`text-lg font-semibold text-left flex-1 ${isSelected ? 'text-ink-900' : 'text-ink-600'}`}>
             {label}
         </span>
     </motion.button>
@@ -143,10 +143,10 @@ const MoodPage: React.FC = () => {
     // Show loading while authenticating
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen w-full bg-[#FFF5F5] flex items-center justify-center">
+            <div className="min-h-screen w-full bg-bone-50 flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="animate-spin mx-auto mb-4 text-pastel-pink" size={48} />
-                    <p className="text-lg font-medium text-gray-700">Initializing your session...</p>
+                    <RefreshCw className="animate-spin mx-auto mb-4 text-plum-500" size={48} />
+                    <p className="text-lg font-medium text-ink-700">Initializing your session...</p>
                 </div>
             </div>
         );
@@ -154,21 +154,17 @@ const MoodPage: React.FC = () => {
 
     if (questions.length === 0) {
         return (
-            <div className="min-h-screen w-full bg-[#FFF5F5] flex items-center justify-center">
+            <div className="min-h-screen w-full bg-bone-50 flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="animate-spin mx-auto mb-4 text-gray-400" size={32} />
-                    <p className="text-gray-600">Loading questions...</p>
+                    <RefreshCw className="animate-spin mx-auto mb-4 text-ink-400" size={32} />
+                    <p className="text-ink-600">Loading questions...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-skin-text pb-24 relative flex flex-col">
-
-            {/* Decorative Background */}
-            <div className="fixed top-[-20%] right-[-20%] w-[500px] h-[500px] bg-pastel-pink/30 rounded-full blur-3xl pointer-events-none" />
-            <div className="fixed bottom-[-20%] left-[-20%] w-[400px] h-[400px] bg-pastel-blue/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="min-h-screen w-full bg-bone-50 font-sans text-ink-900 pb-24 relative flex flex-col">
 
             {/* Header */}
             <div className="pt-8 px-8 mb-10 text-center relative z-10 min-h-[120px] shrink-0">
@@ -179,10 +175,10 @@ const MoodPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                     >
-                        <h1 className="font-display text-3xl font-bold text-[#1A1A1A] mb-2 leading-tight">
+                        <h1 className="font-display text-3xl font-semibold text-ink-900 mb-2 leading-tight">
                             {getHeader()}
                         </h1>
-                        <p className="text-skin-muted text-base">{getSubtext()}</p>
+                        <p className="text-ink-600 text-base">{getSubtext()}</p>
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -220,14 +216,14 @@ const MoodPage: React.FC = () => {
                             animate={{ opacity: 1, scale: 1 }}
                             className="flex items-center justify-center flex-col h-64"
                         >
-                            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 shadow-lg">
+                            <div className="w-24 h-24 bg-moss-100 rounded-full flex items-center justify-center text-moss-600 mb-4">
                                 {isLoggingMood ? (
                                     <RefreshCw className="animate-spin" size={48} />
                                 ) : (
                                     <Check size={48} />
                                 )}
                             </div>
-                            <p className="text-gray-600 font-medium">
+                            <p className="text-ink-600 font-medium">
                                 {isLoggingMood ? 'Saving your check-in...' : 'Check-in saved!'}
                             </p>
                         </motion.div>
@@ -241,7 +237,7 @@ const MoodPage: React.FC = () => {
                 <div className="fixed bottom-24 left-0 right-0 z-20 flex justify-center pointer-events-none">
                     <button
                         onClick={() => setCurrentStep(currentStep - 1)}
-                        className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full text-gray-500 font-medium text-sm hover:text-gray-800 shadow-sm pointer-events-auto"
+                        className="bg-bone-50/80 backdrop-blur-md px-6 py-2 rounded-full text-ink-500 font-medium text-sm hover:text-ink-800 pointer-events-auto border border-ink-900/8"
                     >
                         Go Back
                     </button>

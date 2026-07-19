@@ -10,58 +10,21 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Dermora" />
-  <meta name="theme-color" content="#FFF5F5" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="theme-color" content="#FFF8F5" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap"
-    rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Plus Jakarta Sans', 'sans-serif'],
-          },
-          colors: {
-            skin: {
-              ivory: '#FFF5F5',       // Very light pinkish white
-              beige: '#FFF0E6',       // Warm peach white
-              nude: '#FFD6C9',        // Soft peach
-              cocoa: '#E6CFC2',       // Keep for contrast
-              deep: '#2D2D2D',        // Dark text equivalent
-              text: '#1A1A1A',        // Almost black
-              muted: '#8E8E93',       // Apple style gray
-              accent: '#FFB7B2',      // Soft rose
-            },
-            pastel: {
-              pink: '#FFD1DC',
-              orange: '#FFE0B2',
-              yellow: '#FFF9C4',
-              green: '#C8E6C9',
-              blue: '#BBDEFB',
-              purple: '#E1BEE7',
-              lavender: '#D1C4E9',
-            }
-          },
-          boxShadow: {
-            'soft': '0 20px 60px -15px rgba(255, 182, 193, 0.3)',
-            'card': '0 8px 30px -4px rgba(0, 0, 0, 0.05)',
-            'nav': '0 10px 40px -10px rgba(0,0,0,0.1)',
-          }
-        },
-      },
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500,600,700&family=Instrument+Sans:wght@400,500,600,700&display=swap" rel="stylesheet">
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
     body {
       margin: 0;
       padding: 0;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      background-color: #FFF7F0;
+      background-color: #FFF8F5;
       /* Safe area insets for notched devices */
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
@@ -72,18 +35,12 @@
       width: 0px;
       background: transparent;
     }
+    
+    /* Smooth page transitions */
+    #root {
+      isolation: isolate;
+    }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "framer-motion": "https://esm.sh/framer-motion@^12.29.0"
-  }
-}
-</script>
-  <link rel="stylesheet" href="/index.css">
 </head>
 
 <body>

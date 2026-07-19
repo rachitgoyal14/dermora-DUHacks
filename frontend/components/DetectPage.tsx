@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Camera, Upload, RefreshCw, AlertCircle, CheckCircle, FileText, X, 
     History, ArrowLeftRight, Trash, RotateCcw, Search, Check, 
-    TrendingUp, TrendingDown, Minus, ChevronDown, Sparkles 
+    TrendingUp, TrendingDown, Minus, ChevronDown
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 import { 
@@ -39,7 +39,7 @@ const SkeletonPulse: React.FC<{ className?: string; style?: React.CSSProperties 
 
 // Detect Page Skeleton
 const DetectPageSkeleton: React.FC = () => (
-    <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-[#1A1A1A] pb-[110px] relative overflow-x-hidden">
+    <div className="min-h-screen w-full bg-bone-50 font-sans text-ink-900 pb-[110px] relative overflow-x-hidden">
         {/* Shimmer Animation Style */}
         <style>{`
             @keyframes shimmer {
@@ -51,41 +51,28 @@ const DetectPageSkeleton: React.FC = () => (
             }
         `}</style>
 
-        {/* Decorative Background */}
-        <div className="absolute top-[-10%] right-[-20%] w-[400px] h-[400px] bg-[#FFB6C1]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[10%] left-[-10%] w-[300px] h-[300px] bg-[#8EA7E9]/20 rounded-full blur-3xl pointer-events-none" />
-
         {/* Header Skeleton */}
-        <div className="sticky top-0 bg-[#FFF5F5]/80 backdrop-blur-lg z-40 pt-8 px-6 pb-4 border-b border-gray-200/50">
+        <div className="sticky top-0 bg-bone-50/80 backdrop-blur-lg z-40 pt-8 px-6 pb-4 border-b border-ink-900/8">
             <SkeletonPulse className="h-9 w-48 mb-2" />
             <SkeletonPulse className="h-4 w-56" />
         </div>
 
         <div className="px-6 space-y-6 mt-6">
             {/* Camera Section Skeleton */}
-            <div className="relative w-full h-[420px] bg-gray-200 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+            <div className="relative w-full h-[420px] bg-bone-200 rounded-lg overflow-hidden border border-ink-900/8">
                 <SkeletonPulse className="w-full h-full rounded-none" />
-                
-                {/* Camera Controls Skeleton */}
-                <div className="absolute bottom-8 w-full flex justify-center items-center gap-6 z-10 px-6">
-                    <SkeletonPulse className="w-14 h-14 rounded-full" />
-                    <SkeletonPulse className="w-20 h-20 rounded-full" />
-                </div>
             </div>
 
             {/* Quick Actions Skeleton */}
             <div className="mt-8">
-                <div className="flex items-center gap-2 mb-4">
-                    <SkeletonPulse className="w-6 h-6 rounded" />
-                    <SkeletonPulse className="h-7 w-36" />
-                </div>
+                <SkeletonPulse className="h-4 w-36 mb-4" />
                 <div className="grid grid-cols-2 gap-4">
                     {[1, 2, 3, 4].map((_, index) => (
                         <div 
                             key={index}
-                            className="p-6 bg-white rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center gap-3"
+                            className="p-6 card-base rounded-lg flex flex-col items-center gap-3"
                         >
-                            <SkeletonPulse className="w-8 h-8 rounded-lg" />
+                            <SkeletonPulse className="w-8 h-8 rounded" />
                             <SkeletonPulse className="h-4 w-20" />
                         </div>
                     ))}
@@ -93,33 +80,16 @@ const DetectPageSkeleton: React.FC = () => (
             </div>
 
             {/* Progress Tracker Skeleton */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 mt-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <SkeletonPulse className="w-7 h-7 rounded" />
-                    <SkeletonPulse className="h-7 w-36" />
-                </div>
+            <div className="card-skin rounded-lg p-6 mt-6">
+                <SkeletonPulse className="h-6 w-36 mb-6" />
                 <div className="space-y-4">
                     {[1, 2, 3].map((_, index) => (
-                        <div key={index} className="p-5 rounded-2xl border-2 border-gray-100 bg-gray-50">
-                            <div className="flex items-center justify-between mb-3">
-                                <SkeletonPulse className="h-5 w-20" />
-                                <SkeletonPulse className="h-6 w-24 rounded-full" />
-                            </div>
+                        <div key={index} className="p-5 rounded-lg card-base">
+                            <SkeletonPulse className="h-5 w-20 mb-3" />
                             <SkeletonPulse className="h-4 w-full mb-2" />
                             <SkeletonPulse className="h-4 w-3/4" />
                         </div>
                     ))}
-                </div>
-            </div>
-
-            {/* History Section Skeleton */}
-            <div className="bg-white rounded-3xl p-6 mt-8 shadow-lg border border-gray-100">
-                <div className="w-full flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <SkeletonPulse className="w-7 h-7 rounded" />
-                        <SkeletonPulse className="h-7 w-44" />
-                    </div>
-                    <SkeletonPulse className="w-6 h-6 rounded" />
                 </div>
             </div>
         </div>
@@ -460,15 +430,15 @@ const DetectPage: React.FC = () => {
     };
 
     const getTrendIcon = (trend: string) => {
-        if (trend === 'improving') return <TrendingUp className="text-green-500" size={20} />;
-        if (trend === 'worsening') return <TrendingDown className="text-red-500" size={20} />;
-        return <Minus className="text-gray-400" size={20} />;
+        if (trend === 'improving') return <TrendingUp className="text-moss-600" size={20} />;
+        if (trend === 'worsening') return <TrendingDown className="text-amber-600" size={20} />;
+        return <Minus className="text-ink-400" size={20} />;
     };
 
     const getTrendColor = (trend: string) => {
-        if (trend === 'improving') return 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 text-green-700';
-        if (trend === 'worsening') return 'bg-gradient-to-br from-red-50 to-red-100 border-red-200 text-red-700';
-        return 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 text-gray-700';
+        if (trend === 'improving') return 'bg-moss-50 border-moss-200 text-moss-800';
+        if (trend === 'worsening') return 'bg-amber-50 border-amber-200 text-amber-800';
+        return 'bg-bone-100 border-ink-200 text-ink-700';
     };
     
 
@@ -481,11 +451,7 @@ const DetectPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-[#1A1A1A] pb-[110px] relative overflow-x-hidden">
-            {/* Decorative Background */}
-            <div className="absolute top-[-10%] right-[-20%] w-[400px] h-[400px] bg-[#FFB6C1]/30 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-[10%] left-[-10%] w-[300px] h-[300px] bg-[#8EA7E9]/20 rounded-full blur-3xl pointer-events-none" />
-
+        <div className="min-h-screen w-full bg-bone-50 font-sans text-ink-900 pb-[110px] relative overflow-x-hidden">
             {/* Toast Notification */}
             <AnimatePresence>
                 {toast && (
@@ -494,10 +460,10 @@ const DetectPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -50, scale: 0.95 }}
                         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 ${
+                        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full flex items-center gap-3 ${
                             toast.type === 'success' 
-                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
-                                : 'bg-gradient-to-r from-red-500 to-red-600 text-white'
+                                ? 'bg-moss-500 text-white shadow-md' 
+                                : 'bg-amber-500 text-white shadow-md'
                         }`}
                     >
                         {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
@@ -507,9 +473,9 @@ const DetectPage: React.FC = () => {
             </AnimatePresence>
 
             {/* Header */}
-            <div className="sticky top-0 bg-[#FFF5F5]/80 backdrop-blur-lg z-40 pt-8 px-6 pb-4 border-b border-gray-200/50">
-                <h1 className="font-bold text-3xl text-[#1A1A1A] mb-1">Skin Analysis</h1>
-                <p className="text-gray-600 text-sm">Track your skin health journey</p>
+            <div className="sticky top-0 bg-bone-50/80 backdrop-blur-lg z-40 pt-8 px-6 pb-4 border-b border-ink-900/8">
+                <h1 className="font-display text-3xl text-ink-900 mb-1 font-semibold">Skin Analysis</h1>
+                <p className="text-ink-700 text-sm">Track your skin health journey</p>
             </div>
 
             <div className="px-6 space-y-6 mt-6">
@@ -517,7 +483,7 @@ const DetectPage: React.FC = () => {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="relative w-full h-[420px] bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-white"
+                    className="relative w-full h-[420px] bg-black rounded-lg overflow-hidden border border-ink-900/8"
                 >
                     <AnimatePresence mode="wait">
                         {!imageSrc ? (
@@ -565,10 +531,10 @@ const DetectPage: React.FC = () => {
                                 <div className="absolute bottom-8 w-full flex justify-center items-center gap-6 z-10 px-6">
                                     {/* Upload Button */}
                                     <motion.button
-                                        whileHover={{ scale: 1.1 }}
+                                        whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="p-4 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-all shadow-lg"
+                                        className="p-4 bg-white/90 backdrop-blur-md rounded-full text-ink-900 hover:bg-white transition-all"
                                     >
                                         <Upload size={24} />
                                         <input
@@ -585,9 +551,9 @@ const DetectPage: React.FC = () => {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.9 }}
                                         onClick={capture}
-                                        className="relative w-20 h-20 rounded-full bg-white shadow-2xl flex items-center justify-center"
+                                        className="relative w-20 h-20 rounded-full bg-white flex items-center justify-center"
                                     >
-                                        <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-pink-500 rounded-full" />
+                                        <div className="w-16 h-16 bg-clay-500 rounded-full" />
                                         <div className="absolute inset-0 rounded-full border-4 border-white" />
                                     </motion.button>
                                 </div>
@@ -631,10 +597,10 @@ const DetectPage: React.FC = () => {
                                     <motion.button
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        whileHover={{ scale: 1.1 }}
+                                        whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.9 }}
                                         onClick={reset}
-                                        className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-md text-white rounded-full hover:bg-black/70 transition-all shadow-lg"
+                                        className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-md text-white rounded-full hover:bg-black/70 transition-all"
                                     >
                                         <X size={20} />
                                     </motion.button>
@@ -652,7 +618,7 @@ const DetectPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -20, scale: 0.95 }}
                             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                            className="bg-white rounded-3xl p-6 shadow-xl border-2 border-green-200"
+                            className="card-skin rounded-lg p-6"
                         >
                             {/* Success Header with Glow */}
                             <motion.div 
@@ -661,12 +627,12 @@ const DetectPage: React.FC = () => {
                                 className="flex items-center gap-3 mb-6"
                             >
                                 <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
+                                    animate={{ scale: [1, 1.1, 1] }}
                                     transition={{ duration: 0.5, repeat: 3 }}
                                 >
-                                    <CheckCircle className="text-green-500" size={32} />
+                                    <CheckCircle className="text-moss-500" size={32} />
                                 </motion.div>
-                                <h2 className="text-2xl font-bold text-gray-800">Analysis Complete</h2>
+                                <h2 className="text-2xl font-semibold text-ink-900 font-display">Analysis Complete</h2>
                             </motion.div>
 
                             {/* Stats Grid - NO RAW NUMBERS */}
@@ -675,10 +641,10 @@ const DetectPage: React.FC = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.1 }}
-                                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200"
+                                    className="bg-sage-50 rounded-lg p-4 border border-sage-200"
                                 >
-                                    <p className="text-xs text-gray-600 uppercase tracking-wide mb-1 font-semibold">Condition Detected</p>
-                                    <p className="font-bold text-xl text-gray-900 capitalize">{result.prediction}</p>
+                                    <p className="text-xs text-ink-600 uppercase tracking-wide mb-1 font-semibold eyebrow">Condition Detected</p>
+                                    <p className="font-semibold text-xl text-ink-900 capitalize">{result.prediction}</p>
                                 </motion.div>
                             </div>
 
@@ -687,7 +653,7 @@ const DetectPage: React.FC = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="text-sm text-gray-600 leading-relaxed mb-4 p-4 bg-gray-50 rounded-xl"
+                                className="text-sm text-ink-700 leading-relaxed mb-4 p-4 bg-bone-100 rounded-lg"
                             >
                                 {result.message}
                             </motion.p>
@@ -699,7 +665,7 @@ const DetectPage: React.FC = () => {
                                 transition={{ delay: 0.4 }}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                                className="w-full py-3 bg-[#1A1A1A] text-white rounded-2xl font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                                className="btn-primary w-full py-3 rounded-full font-semibold flex items-center justify-center gap-2"
                             >
                                 <FileText size={18} />
                                 View Full Report
@@ -713,7 +679,7 @@ const DetectPage: React.FC = () => {
                     <motion.div 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-4 bg-red-50 text-red-600 rounded-2xl flex items-center gap-3 border border-red-200 shadow-lg"
+                        className="p-4 bg-amber-50 text-amber-800 rounded-lg flex items-center gap-3 border border-amber-200"
                     >
                         <AlertCircle size={20} />
                         <span className="text-sm font-medium">{error}</span>
@@ -727,29 +693,26 @@ const DetectPage: React.FC = () => {
                     transition={{ delay: 0.2 }}
                     className="mt-8"
                 >
-                    <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                        <Sparkles className="text-[#FFA07A]" size={24} />
-                        Quick Actions
-                    </h2>
+                    <h2 className="eyebrow text-ink-600 mb-4">Quick Actions</h2>
                     <div className="grid grid-cols-2 gap-4">
                         {[
-                            { icon: Search, label: 'Re-Analyze', color: 'purple', mode: 'reanalyze' as ActionMode },
-                            { icon: ArrowLeftRight, label: 'Compare', color: 'orange', mode: 'compare' as ActionMode },
-                            { icon: Trash, label: 'Delete', color: 'red', mode: 'delete' as ActionMode },
-                            { icon: RotateCcw, label: 'Refresh', color: 'green', mode: 'none' as ActionMode }
+                            { icon: Search, label: 'Re-Analyze', mode: 'reanalyze' as ActionMode },
+                            { icon: ArrowLeftRight, label: 'Compare', mode: 'compare' as ActionMode },
+                            { icon: Trash, label: 'Delete', mode: 'delete' as ActionMode },
+                            { icon: RotateCcw, label: 'Refresh', mode: 'none' as ActionMode }
                         ].map((action, index) => (
                             <motion.button
                                 key={action.label}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 * index }}
-                                whileHover={{ scale: 1.05, y: -4 }}
+                                whileHover={{ scale: 1.02, y: -2 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => action.mode === 'none' ? handleRefresh() : openModal(action.mode)}
-                                className="p-6 bg-white rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all flex flex-col items-center gap-3"
+                                className="p-6 card-base rounded-lg flex flex-col items-center gap-3"
                             >
-                                <action.icon className={`text-${action.color}-500`} size={32} />
-                                <span className="text-sm font-bold text-gray-800">{action.label}</span>
+                                <action.icon className="text-sage-600" size={28} />
+                                <span className="text-sm font-semibold text-ink-900">{action.label}</span>
                             </motion.button>
                         ))}
                     </div>
@@ -760,11 +723,11 @@ const DetectPage: React.FC = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 mt-6"
+                        className="card-skin rounded-lg p-6 mt-6"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <TrendingUp className="text-[#8EA7E9]" size={28} />
-                            <h2 className="text-2xl font-bold text-gray-800">Your Progress</h2>
+                            <TrendingUp className="text-sage-600" size={28} />
+                            <h2 className="text-2xl font-semibold text-ink-900 font-display">Your Progress</h2>
                         </div>
 
                         <div className="space-y-4">
@@ -774,7 +737,7 @@ const DetectPage: React.FC = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.05 * index }}
-                                    className={`p-5 rounded-2xl border-2 ${getTrendColor(week.trend)} transition-all hover:shadow-lg`}
+                                    className={`p-5 rounded-lg border-2 ${getTrendColor(week.trend)} transition-all`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="font-bold text-lg">Week {week.week_number}</span>
@@ -794,7 +757,7 @@ const DetectPage: React.FC = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className={`mt-6 p-5 rounded-2xl border-2 ${getTrendColor(history.overall_trend)}`}
+                                className={`mt-6 p-5 rounded-lg border-2 ${getTrendColor(history.overall_trend)}`}
                             >
                                 <div className="flex items-center gap-3 mb-2">
                                     {getTrendIcon(history.overall_trend)}
@@ -812,7 +775,7 @@ const DetectPage: React.FC = () => {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-3xl p-6 mt-8 shadow-lg border border-gray-100"
+                    className="card-base rounded-lg p-6 mt-8"
                 >
                     <motion.button
                         whileHover={{ scale: 1.01 }}
@@ -821,14 +784,14 @@ const DetectPage: React.FC = () => {
                         className="w-full flex items-center justify-between"
                     >
                         <div className="flex items-center gap-3">
-                            <History size={28} className="text-[#8EA7E9]" />
-                            <h3 className="font-bold text-2xl text-gray-800">Your Skin History</h3>
+                            <History size={28} className="text-sage-600" />
+                            <h3 className="font-semibold text-2xl text-ink-900 font-display">Your Skin History</h3>
                         </div>
                         <motion.div
                             animate={{ rotate: historyExpanded ? 180 : 0 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <ChevronDown size={24} className="text-gray-600" />
+                            <ChevronDown size={24} className="text-ink-600" />
                         </motion.div>
                     </motion.button>
 
@@ -843,19 +806,19 @@ const DetectPage: React.FC = () => {
                             >
                                 {loadingImages && (
                                     <div className="flex justify-center items-center py-12">
-                                        <RefreshCw className="animate-spin text-gray-400" size={32} />
+                                        <RefreshCw className="animate-spin text-ink-400" size={32} />
                                     </div>
                                 )}
 
                                 {imagesError && (
-                                    <div className="p-4 bg-red-50 text-red-600 rounded-2xl flex items-center gap-2 border border-red-100">
+                                    <div className="p-4 bg-amber-50 text-amber-800 rounded-lg flex items-center gap-2 border border-amber-200">
                                         <AlertCircle size={20} />
                                         <span className="text-sm font-medium">{imagesError}</span>
                                     </div>
                                 )}
 
                                 {!loadingImages && !imagesError && userImages.length === 0 && (
-                                    <div className="bg-gray-50 rounded-2xl p-12 text-center">
+                                    <div className="bg-bone-100 rounded-lg p-12 text-center">
                                         <Camera className="mx-auto mb-4 text-gray-300" size={48} />
                                         <p className="text-gray-600 font-medium">No images yet—upload your first one!</p>
                                     </div>
@@ -869,19 +832,19 @@ const DetectPage: React.FC = () => {
                                                 initial={{ opacity: 0, scale: 0.8 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: 0.05 * index }}
-                                                whileHover={{ scale: 1.05, y: -4 }}
-                                                className="bg-gray-50 rounded-2xl overflow-hidden shadow-md border border-gray-200 cursor-pointer"
+                                                whileHover={{ scale: 1.02, y: -2 }}
+                                                className="bg-bone-100 rounded-lg overflow-hidden border border-ink-900/8 cursor-pointer"
                                             >
                                                 <div className="aspect-square relative">
                                                     <img
                                                         src={getImageUrl(img.image_url) || "/placeholder.svg"}
                                                         alt={`Skin ${img.image_type}`}
-                                                        className="w-full h-full object-cover"
+                                                        className="duotone-thumbnail w-full h-full object-cover"
                                                         loading="lazy"
                                                     />
                                                 </div>
                                                 <div className="p-2">
-                                                    <p className="text-xs text-gray-500">{formatDate(img.captured_at)}</p>
+                                                    <p className="text-xs text-ink-600">{formatDate(img.captured_at)}</p>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -897,14 +860,14 @@ const DetectPage: React.FC = () => {
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 mt-6"
+    className="card-skin rounded-lg p-6 mt-6"
   >
     {/* RE-ANALYZE */}
     {actionResult._type === 'reanalyze' && (
       <>
         <div className="flex items-center gap-3 mb-4">
-          <CheckCircle className="text-green-500" size={28} />
-          <h2 className="text-xl font-bold text-gray-800">Re-Analysis Complete</h2>
+          <CheckCircle className="text-moss-500" size={28} />
+          <h2 className="text-xl font-semibold text-ink-900 font-display">Re-Analysis Complete</h2>
         </div>
 
         <div className="p-4 bg-blue-50 rounded-2xl mb-4">
@@ -1009,18 +972,18 @@ const DetectPage: React.FC = () => {
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="bg-white w-full md:w-[90%] md:max-w-4xl rounded-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+                            className="bg-bone-50 w-full md:w-[90%] md:max-w-4xl rounded-lg max-h-[85vh] overflow-hidden flex flex-col shadow-md"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Modal Header */}
-                            <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-[#FFB6C1]/10 to-[#8EA7E9]/10">
+                            <div className="p-6 border-b border-ink-900/8 flex items-center justify-between bg-sage-50">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">
+                                    <h2 className="text-2xl font-semibold text-ink-900 font-display">
                                         {actionMode === 'reanalyze' && 'Select Image to Re-Analyze'}
                                         {actionMode === 'compare' && 'Select 2 Images to Compare'}
                                         {actionMode === 'delete' && 'Select Image to Delete'}
                                     </h2>
-                                    <p className="text-sm text-gray-500 mt-1 font-medium">
+                                    <p className="text-sm text-ink-600 mt-1 font-medium">
                                         {actionMode === 'compare' && selectedImageIds.length === 2 && 'Ready to compare'}
                                         {actionMode === 'compare' && selectedImageIds.length < 2 && `${selectedImageIds.length}/2 selected`}
                                         {actionMode !== 'compare' && selectedImageIds.length > 0 && 'Image selected'}
@@ -1028,10 +991,10 @@ const DetectPage: React.FC = () => {
                                     </p>
                                 </div>
                                 <motion.button
-                                    whileHover={{ scale: 1.1, rotate: 90 }}
+                                    whileHover={{ scale: 1.05, rotate: 90 }}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={closeModal}
-                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    className="p-2 hover:bg-bone-200 rounded-full transition-colors"
                                     disabled={isProcessing}
                                 >
                                     <X size={24} />
@@ -1042,8 +1005,8 @@ const DetectPage: React.FC = () => {
                             <div className="flex-1 overflow-y-auto p-6">
                                 {userImages.length === 0 ? (
                                     <div className="text-center py-12">
-                                        <Camera className="mx-auto mb-4 text-gray-300" size={48} />
-                                        <p className="text-gray-600 font-medium">No images available</p>
+                                        <Camera className="mx-auto mb-4 text-ink-300" size={48} />
+                                        <p className="text-ink-600 font-medium">No images available</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -1055,13 +1018,13 @@ const DetectPage: React.FC = () => {
                                                     initial={{ opacity: 0, scale: 0.8 }}
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     transition={{ delay: 0.05 * index }}
-                                                    whileHover={{ scale: isProcessing ? 1 : 1.05 }}
+                                                    whileHover={{ scale: isProcessing ? 1 : 1.02 }}
                                                     whileTap={{ scale: isProcessing ? 1 : 0.95 }}
                                                     onClick={() => !isProcessing && toggleImageSelection(img.image_id)}
-                                                    className={`bg-white rounded-2xl overflow-hidden cursor-pointer transition-all ${
+                                                    className={`bg-bone-50 rounded-lg overflow-hidden cursor-pointer transition-all ${
                                                         isSelected
-                                                            ? 'ring-4 ring-blue-500 shadow-2xl'
-                                                            : 'ring-2 ring-gray-200 hover:ring-gray-300'
+                                                            ? 'ring-2 ring-clay-500'
+                                                            : 'ring-1 ring-ink-900/8 hover:ring-ink-900/16'
                                                     } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
                                                     <div className="aspect-square relative">
@@ -1074,17 +1037,17 @@ const DetectPage: React.FC = () => {
                                                             <motion.div
                                                                 initial={{ opacity: 0, scale: 0.5 }}
                                                                 animate={{ opacity: 1, scale: 1 }}
-                                                                className="absolute inset-0 bg-blue-500/20 flex items-center justify-center"
+                                                                className="absolute inset-0 bg-clay-500/20 flex items-center justify-center"
                                                             >
-                                                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                                                                <div className="w-12 h-12 bg-clay-500 rounded-full flex items-center justify-center">
                                                                     <Check className="text-white" size={24} />
                                                                 </div>
                                                             </motion.div>
                                                         )}
                                                     </div>
-                                                    <div className="p-3 bg-gray-50">
-                                                        <p className="text-xs text-gray-500 mb-1">{formatDate(img.captured_at)}</p>
-                                                        <p className="text-sm font-semibold text-gray-800 capitalize">{img.image_type}</p>
+                                                    <div className="p-3 bg-bone-100">
+                                                        <p className="text-xs text-ink-600 mb-1">{formatDate(img.captured_at)}</p>
+                                                        <p className="text-sm font-semibold text-ink-900 capitalize">{img.image_type}</p>
                                                     </div>
                                                 </motion.div>
                                             );
@@ -1094,13 +1057,13 @@ const DetectPage: React.FC = () => {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="p-6 border-t border-gray-200 flex gap-3 bg-gray-50">
+                            <div className="p-6 border-t border-ink-900/8 flex gap-3 bg-bone-100">
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={closeModal}
                                     disabled={isProcessing}
-                                    className="flex-1 py-3 bg-white text-gray-700 rounded-2xl font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-gray-200"
+                                    className="flex-1 py-3 bg-bone-50 text-ink-700 rounded-full font-semibold hover:bg-bone-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-ink-900/8"
                                 >
                                     Cancel
                                 </motion.button>
@@ -1109,10 +1072,10 @@ const DetectPage: React.FC = () => {
                                     whileTap={{ scale: isConfirmDisabled() || isProcessing ? 1 : 0.98 }}
                                     onClick={handleConfirmAction}
                                     disabled={isConfirmDisabled() || isProcessing}
-                                    className={`flex-1 py-3 rounded-2xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                                    className={`flex-1 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
                                         isConfirmDisabled() || isProcessing
-                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg'
+                                            ? 'bg-ink-200 text-ink-400 cursor-not-allowed'
+                                            : 'btn-primary'
                                     }`}
                                 >
                                     {isProcessing && <RefreshCw className="animate-spin" size={18} />}

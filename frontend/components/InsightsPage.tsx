@@ -57,7 +57,7 @@ const SkeletonPulse: React.FC<SkeletonPulseProps> = ({
 );
 
 const InsightsSkeleton: React.FC = () => (
-    <div className="min-h-screen w-full bg-[#FFF5F5] font-sans overflow-x-hidden pb-24">
+    <div className="min-h-screen w-full bg-bone-50 font-sans overflow-x-hidden pb-24">
         <style>{`
             @keyframes shimmer {
                 0% { background-position: 200% 0; }
@@ -65,7 +65,7 @@ const InsightsSkeleton: React.FC = () => (
             }
         `}</style>
 
-        <nav className="sticky top-0 z-40 px-5 py-4 bg-[#FFF5F5]/95 backdrop-blur-md border-b border-gray-100">
+        <nav className="sticky top-0 z-40 px-5 py-4 bg-bone-50/95 backdrop-blur-md border-b border-gray-100">
             <div className="flex justify-between items-center max-w-md mx-auto">
                 <div>
                     <SkeletonPulse className="h-7 w-24 rounded-lg mb-1" />
@@ -78,7 +78,7 @@ const InsightsSkeleton: React.FC = () => (
         <div className="px-5 py-6 max-w-md mx-auto space-y-6">
             <div className="grid grid-cols-2 gap-3">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-white/60 rounded-2xl p-4 border border-gray-100">
+                    <div key={i} className="bg-white/60 rounded-lg p-4 border border-gray-100">
                         <SkeletonPulse className="w-5 h-5 rounded mb-2" />
                         <SkeletonPulse className="h-8 w-12 rounded mb-1" />
                         <SkeletonPulse className="h-3 w-20 rounded" />
@@ -259,19 +259,19 @@ const InsightsPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-skin-text overflow-x-hidden pb-24">
+        <div className="min-h-screen w-full bg-bone-50 font-sans text-skin-text overflow-x-hidden pb-24">
 
             <motion.nav
-                className="sticky top-0 z-40 px-5 py-4 bg-[#FFF5F5]/95 backdrop-blur-md border-b border-gray-100"
+                className="sticky top-0 z-40 px-5 py-4 bg-bone-50/95 backdrop-blur-md border-b border-gray-100"
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
             >
                 <div className="flex justify-between items-center max-w-md mx-auto">
                     <div>
                         <h1 className="font-display font-bold text-2xl text-[#1A1A1A]">Insights</h1>
-                        <p className="text-xs text-gray-400">Your progress & analytics</p>
+                        <p className="text-xs text-ink-400">Your progress & analytics</p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pastel-orange to-pastel-pink flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center">
                         <BarChart3 size={24} className="text-white" />
                     </div>
                 </div>
@@ -284,7 +284,7 @@ const InsightsPage: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    className="btn-primary w-full rounded-full p-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                     {generatingReport ? (
                         <>
@@ -308,25 +308,25 @@ const InsightsPage: React.FC = () => {
                             Quick Stats
                         </h2>
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-4 border border-pink-200">
-                                <Camera size={20} className="text-pink-600 mb-2" />
-                                <div className="text-2xl font-bold text-[#1A1A1A]">
+                            <div className="bg-sage-50 rounded-lg p-4 border border-sage-200">
+                                <Camera size={20} className="text-sage-600 mb-2" />
+                                <div className="text-2xl font-bold text-ink-900">
                                     {dashboardStats.recent_activity?.images_this_week || 0}
                                 </div>
                                 <div className="text-xs text-gray-600 mt-1">Images This Week</div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200">
-                                <Activity size={20} className="text-blue-600 mb-2" />
-                                <div className="text-2xl font-bold text-[#1A1A1A]">
+                            <div className="bg-plum-50 rounded-lg p-4 border border-plum-200">
+                                <Activity size={20} className="text-plum-600 mb-2" />
+                                <div className="text-2xl font-bold text-ink-900">
                                     {dashboardStats.quick_stats?.avg_mood_this_week 
-                                        ? dashboardStats.quick_stats.avg_mood_this_week >= 75 ? '😊'
-                                        : dashboardStats.quick_stats.avg_mood_this_week >= 50 ? '😌'
-                                        : dashboardStats.quick_stats.avg_mood_this_week >= 25 ? '😐'
-                                        : '😔'
+                                        ? dashboardStats.quick_stats.avg_mood_this_week >= 75 ? 'Great'
+                                        : dashboardStats.quick_stats.avg_mood_this_week >= 50 ? 'Steady'
+                                        : dashboardStats.quick_stats.avg_mood_this_week >= 25 ? 'Getting by'
+                                        : 'Tough'
                                         : '—'}
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1">
+                                <div className="text-xs text-ink-600 mt-1">
                                     {dashboardStats.quick_stats?.avg_mood_this_week
                                         ? dashboardStats.quick_stats.avg_mood_this_week >= 75 ? 'Feeling great'
                                         : dashboardStats.quick_stats.avg_mood_this_week >= 50 ? 'Steady mood'
@@ -336,7 +336,7 @@ const InsightsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200">
+                            <div className="bg-moss-50 rounded-lg p-4 border border-moss-200">
                                 <Calendar size={20} className="text-purple-600 mb-2" />
                                 <div className="text-2xl font-bold text-[#1A1A1A]">
                                     {dashboardStats.recent_activity?.days_active || 0}
@@ -344,7 +344,7 @@ const InsightsPage: React.FC = () => {
                                 <div className="text-xs text-gray-600 mt-1">Active Days</div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 border border-green-200">
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
                                 <TrendingUp size={20} className="text-green-600 mb-2" />
                                 <div className="text-2xl font-bold text-[#1A1A1A]">
                                     {improvementData?.overall_trend 
@@ -366,7 +366,7 @@ const InsightsPage: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="bg-white rounded-3xl p-5 shadow-md border border-gray-100"
+                        className="bg-white rounded-lg p-5 shadow-md border border-gray-100"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
@@ -393,12 +393,12 @@ const InsightsPage: React.FC = () => {
                             <AreaChart data={moodChartData}>
                                 <defs>
                                     <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#FFB6C1" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#FFB6C1" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#9D7BA8" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#9D7BA8" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8EA7E9" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#8EA7E9" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#8B9D83" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#8B9D83" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -420,7 +420,7 @@ const InsightsPage: React.FC = () => {
                                 <Area
                                     type="monotone"
                                     dataKey="mood_score"
-                                    stroke="#FFB6C1"
+                                    stroke="#9D7BA8"
                                     strokeWidth={2}
                                     fillOpacity={1}
                                     fill="url(#moodGradient)"
@@ -429,7 +429,7 @@ const InsightsPage: React.FC = () => {
                                 <Area
                                     type="monotone"
                                     dataKey="energy"
-                                    stroke="#8EA7E9"
+                                    stroke="#8B9D83"
                                     strokeWidth={2}
                                     fillOpacity={1}
                                     fill="url(#energyGradient)"
@@ -439,24 +439,24 @@ const InsightsPage: React.FC = () => {
                         </ResponsiveContainer>
 
                         {moodSummary && (
-                            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3 text-center">
+                            <div className="mt-4 pt-4 border-t border-ink-900/8 grid grid-cols-2 gap-3 text-center">
                                 <div>
-                                    <div className="text-xs text-gray-500">Mood This Week</div>
-                                    <div className="text-2xl font-bold text-pink-600">
+                                    <div className="text-xs text-ink-600 eyebrow">Mood This Week</div>
+                                    <div className="text-2xl font-semibold text-plum-600">
                                         {moodSummary.avg_mood 
-                                            ? moodSummary.avg_mood >= 75 ? '😊 Great'
-                                            : moodSummary.avg_mood >= 50 ? '😌 Good'
-                                            : moodSummary.avg_mood >= 25 ? '😐 Okay'
-                                            : '😔 Tough'
+                                            ? moodSummary.avg_mood >= 75 ? 'Great'
+                                            : moodSummary.avg_mood >= 50 ? 'Good'
+                                            : moodSummary.avg_mood >= 25 ? 'Okay'
+                                            : 'Tough'
                                             : '—'}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-500">Energy Level</div>
-                                    <div className="text-2xl font-bold text-blue-600">
+                                    <div className="text-xs text-ink-600 eyebrow">Energy Level</div>
+                                    <div className="text-2xl font-semibold text-moss-600">
                                         {moodSummary.avg_energy 
-                                            ? moodSummary.avg_energy >= 75 ? '⚡ High'
-                                            : moodSummary.avg_energy >= 50 ? '💪 Good'
+                                            ? moodSummary.avg_energy >= 75 ? 'High'
+                                            : moodSummary.avg_energy >= 50 ? 'Good'
                                             : moodSummary.avg_energy >= 25 ? '🔋 Low'
                                             : '😴 Tired'
                                             : '—'}
@@ -472,7 +472,7 @@ const InsightsPage: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="bg-white rounded-3xl p-5 shadow-md border border-gray-100"
+                        className="bg-white rounded-lg p-5 shadow-md border border-gray-100"
                     >
                         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
                             Skin Progress
@@ -532,12 +532,12 @@ const InsightsPage: React.FC = () => {
                     </div>
 
                     {loadingReports ? (
-                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+                        <div className="bg-white rounded-lg p-8 text-center shadow-sm">
                             <RefreshCw className="animate-spin mx-auto mb-3 text-pastel-pink" size={32} />
                             <p className="text-sm text-gray-500">Loading reports...</p>
                         </div>
                     ) : reports.length === 0 ? (
-                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
                             <Calendar className="mx-auto mb-3 text-gray-300" size={40} />
                             <p className="text-sm text-gray-500 mb-1">No reports yet</p>
                             <p className="text-xs text-gray-400">Generate your first report above!</p>
@@ -550,7 +550,7 @@ const InsightsPage: React.FC = () => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
                                     onClick={() => handleViewReport(report.week_start)}
                                 >
                                     <div className="flex items-start justify-between">
@@ -607,7 +607,7 @@ const InsightsPage: React.FC = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl"
+                            className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-md"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
