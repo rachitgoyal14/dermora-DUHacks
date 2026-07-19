@@ -19,9 +19,11 @@ import {
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 import { 
-    uploadSkinImage, getImprovementTracker, getSkinHistory, 
-    analyzeExisting, compareImages, deleteImage, refreshImprovement, getMySkinImages 
+    uploadSkinImage, getSkinHistory, 
+    analyzeExisting, compareImages, deleteImage, refreshImprovement
 } from '../services/api';
+import { useMySkinImages, useImprovementTracker } from '../hooks/queries';
+import { queryClient } from '../services/queryClient';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const isNative = Capacitor.isNativePlatform();
@@ -196,11 +198,13 @@ const DetectPage: React.FC = () => {
     const [result, setResult] = useState<any | null>(null);
     const [error, setError] = useState<string | null>(null);
     
-    // History & Images
-    const [history, setHistory] = useState<any>(null);
-    const [userImages, setUserImages] = useState<SkinImage[]>([]);
-    const [loadingImages, setLoadingImages] = useState(false);
-    const [imagesError, setImagesError] = useState<string | null>(null);
+    // History & Images via React Query
+    const { data: userImagesData, isLoading: loadingImages, error: imagesErrorObj } = useMySkinImages();
+    const { data: historyData } = useImprovementTracker();
+    const userImages = userImagesData || [];
+    const history = historyData || null;
+    const imagesError = imagesErrorObj ? 'Failed to load images' : null;
+
     const [historyExpanded, setHistoryExpanded] = useState(false);
     
     // Actions
@@ -227,42 +231,6 @@ const DetectPage: React.FC = () => {
         return `${BACKEND_URL}/${cleanPath}?t=${Date.now()}`;
     };
     
-
-    // Fetch user images
-    const fetchUserImages = useCallback(async () => {
-        if (!isAuthReady) return;
-
-        setLoadingImages(true);
-        setImagesError(null);
-        try {
-            const images = await getMySkinImages();
-            setUserImages(images);
-        } catch (err) {
-            console.error('Failed to fetch user images', err);
-            setImagesError('Failed to load images');
-        } finally {
-            setLoadingImages(false);
-        }
-    }, [isAuthReady]);
-
-    // Fetch history on mount
-    useEffect(() => {
-        const fetchHistory = async () => {
-            if (!isAuthReady) return;
-
-            try {
-                const data = await getImprovementTracker();
-                setHistory(data);
-            } catch (err) {
-                console.error('Failed to fetch history', err);
-            }
-        };
-
-        if (isAuthReady) {
-            fetchHistory();
-            fetchUserImages();
-        }
-    }, [isAuthReady, fetchUserImages]);
 
     // const capture = useCallback(() => {
     //     if (!isAuthReady) return;  // ← ADD THIS LINE
@@ -362,7 +330,10 @@ const DetectPage: React.FC = () => {
                 setTimeout(() => setShowConfetti(false), 3000);
             }
             showToast('Image uploaded and analyzed successfully!', 'success');
-            fetchUserImages();
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['mySkinImages'] }),
+                queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+            ]);
         } catch (err) {
             console.error(err);
             setError('Failed to analyze image. Please try again.');
@@ -429,6 +400,11 @@ const DetectPage: React.FC = () => {
                 const res = await analyzeExisting(selectedImageIds[0]);
                 setActionResult({ ...res, _type: 'reanalyze' });
                 showToast('Image re-analyzed successfully!', 'success');
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['mySkinImages'] }),
+                    queryClient.invalidateQueries({ queryKey: ['improvementTracker'] }),
+                    queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+                ]);
             } else if (actionMode === 'compare' && selectedImageIds.length === 2) {
                 const sortedIds = [...selectedImageIds].sort((a, b) => {
                     const imgA = userImages.find(img => img.image_id === a);
@@ -443,7 +419,10 @@ const DetectPage: React.FC = () => {
                 const res = await deleteImage(selectedImageIds[0]);
                 setActionResult({ ...res, _type: 'delete' });
                 showToast('Image deleted successfully!', 'success');
-                fetchUserImages();
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['mySkinImages'] }),
+                    queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+                ]);
             }
             closeModal();
         } catch (err) {
@@ -459,8 +438,11 @@ const DetectPage: React.FC = () => {
         try {
             await refreshImprovement();
             showToast('Improvement data refreshed!', 'success');
-            const data = await getImprovementTracker();
-            setHistory(data);
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['improvementTracker'] }),
+                queryClient.invalidateQueries({ queryKey: ['mySkinImages'] }),
+                queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+            ]);
         } catch (err) {
             console.error(err);
             showToast('Failed to refresh', 'error');
